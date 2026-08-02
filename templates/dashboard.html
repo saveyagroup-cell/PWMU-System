@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control Room Dashboard — EchoByte</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:        #07111E;
+    --surface:   #0D1F35;
+    --border:    #1E3A5F;
+    --accent:    #00C853;
+    --text:      #E8F0FE;
+    --text-muted:#8BAEC8;
+    --danger:    #FF4444;
+  }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+  
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+  
+  /* Balance Scale Animation */
+  .scale-container { position: relative; height: 120px; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 20px; margin-top: 20px; }
+  .scale-beam { position: absolute; top: 40px; left: 10%; right: 10%; height: 4px; background: var(--accent); transform-origin: center; transition: transform 0.5s ease; }
+  .scale-pan { width: 60px; height: 60px; background: rgba(0, 200, 83, 0.1); border: 2px solid var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; position: relative; top: -30px; transition: transform 0.5s ease; }
+  .scale-pan span { font-size: 12px; font-weight: bold; color: var(--text); }
+  .scale-pan small { font-size: 9px; color: var(--accent); }
+  .scale-base { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 60px solid var(--border); }
+  
+  /* Speedometer Gauge */
+  .gauge-wrap { position: relative; width: 140px; height: 70px; overflow: hidden; margin: 0 auto; margin-top: 20px; }
+  .gauge-bg { width: 140px; height: 140px; border-radius: 50%; border: 15px solid var(--border); box-sizing: border-box; }
+  .gauge-fill { position: absolute; top: 0; left: 0; width: 140px; height: 140px; border-radius: 50%; border: 15px solid var(--accent); border-bottom-color: transparent; border-right-color: transparent; box-sizing: border-box; transform: rotate(-45deg); transition: transform 1s ease-out; }
+  .gauge-needle { position: absolute; bottom: 0; left: 50%; width: 4px; height: 60px; background: #fff; transform-origin: bottom center; transform: translateX(-50%) rotate(-90deg); transition: transform 1s ease-out; border-radius: 4px; }
+  .gauge-center { position: absolute; bottom: -5px; left: 50%; width: 14px; height: 14px; background: #fff; border-radius: 50%; transform: translateX(-50%); }
+  .gauge-val { text-align: center; font-size: 18px; font-weight: 800; color: var(--accent); margin-top: 10px; }
+  
+  /* Table */
+  table { width: 100%; text-align: left; border-collapse: collapse; }
+  th { font-size: 10px; text-transform: uppercase; color: var(--text-muted); padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  td { font-size: 12px; padding: 10px 12px; border-bottom: 1px solid rgba(30, 58, 95, 0.4); }
+  tr:last-child td { border-bottom: none; }
+  .status-verified { color: var(--accent); font-weight: 600; }
+  .status-flagged { color: var(--danger); font-weight: 600; }
+</style>
+</head>
+<body>
+{% include "_header.html" %}
+
+<main class="max-w-[1500px] mx-auto px-6 py-6">
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
+    <h2 class="text-xl font-extrabold" data-i18n="nav.dashboard">Control Room Dashboard</h2>
+    <div class="flex items-center gap-2">
+      <select id="report-period" class="text-sm border border-[--border] rounded-full px-4 py-2 bg-[--surface] text-white">
+        <option value="daily">Today</option>
+        <option value="weekly">This Week</option>
+        <option value="monthly">This Month</option>
+        <option value="all">All Time</option>
+      </select>
+      <button class="bg-[#1E3A8A] hover:bg-blue-900 text-white text-sm font-semibold px-5 py-2 rounded-full transition-colors" onclick="window.location.href='/api/report_pdf/full?period=all'">⬇ Export Full PDF Audit</button>
+    </div>
+  </div>
+
+  <!-- Row 1: KPI Widgets -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
+    <!-- Scale -->
+    <div class="card flex flex-col justify-between">
+      <h3 class="card-title text-center">Intake vs. Outflow Quantities</h3>
+      <div class="scale-container" id="balance-widget">
+        <div class="scale-base"></div>
+        <div class="scale-beam" id="scale-beam"></div>
+        <div class="scale-pan" id="pan-in" style="transform: translateY(0);"><span id="val-in">0</span><small>Tons</small></div>
+        <div class="scale-pan" id="pan-out" style="transform: translateY(0);"><span id="val-out">0</span><small>Tons</small></div>
+      </div>
+      <div class="text-center mt-3 text-[10px] bg-[rgba(0,200,83,0.15)] text-[--accent] py-1 rounded mx-auto px-3 border border-[--accent]">BALANCE OK: <span id="val-bal-pct">100%</span></div>
+    </div>
+    
+    <!-- Gauge -->
+    <div class="card flex flex-col justify-between">
+      <h3 class="card-title text-center">Machine Utilization</h3>
+      <div class="gauge-wrap">
+        <div class="gauge-bg"></div>
+        <div class="gauge-fill" id="gauge-fill"></div>
+        <div class="gauge-needle" id="gauge-needle"></div>
+        <div class="gauge-center"></div>
+      </div>
+      <div class="gauge-val" id="val-uptime">0%</div>
+      <div class="text-center text-[10px] text-[--text-muted]">Daily Target: 90%</div>
+    </div>
+    
+    <div class="card flex flex-col justify-center items-center">
+      <div class="text-3xl mb-2">📦</div>
+      <div class="text-[--text-muted] text-xs">Total Items Detected</div>
+      <div class="text-3xl font-extrabold text-[--accent] mt-1" id="kpi-total-items">0</div>
+    </div>
+    
+    <div class="card flex flex-col justify-center items-center">
+      <div class="text-3xl mb-2">🚨</div>
+      <div class="text-[--text-muted] text-xs">Active Security Alerts</div>
+      <div class="text-3xl font-extrabold text-[--danger] mt-1" id="kpi-alerts">0</div>
+    </div>
+  </div>
+
+  <!-- Row 2: Charts -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+    <div class="card"><h3 class="card-title">Daily Intake vs. Output (ML Verified)</h3><div class="h-48"><canvas id="chart-daily"></canvas></div></div>
+    <div class="card"><h3 class="card-title">Waste Composition Analysis</h3><div class="h-48"><canvas id="chart-comp"></canvas></div></div>
+    <div class="card"><h3 class="card-title">Revenue From Waste Collection</h3><div class="h-48"><canvas id="chart-revenue"></canvas></div></div>
+  </div>
+
+  <!-- Row 3: Monthly & Cluster Analysis -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+    <div class="card"><h3 class="card-title">Monthly Plastic Waste Collection</h3><div class="h-48"><canvas id="chart-monthly"></canvas></div></div>
+    <div class="card"><h3 class="card-title">Cluster-Wide Performance Analysis</h3><div class="h-48"><canvas id="chart-cluster-perf"></canvas></div></div>
+    <div class="card"><h3 class="card-title">Populated Village Projections</h3><div class="h-48"><canvas id="chart-projections"></canvas></div></div>
+  </div>
+
+  <!-- Row 4: Secure Digital Record & Donuts -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+    <div class="card lg:col-span-2 overflow-hidden flex flex-col">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="card-title mb-0">Secure Digital Record</h3>
+        <span class="text-[10px] bg-[rgba(255,68,68,0.15)] text-[--danger] px-2 py-1 rounded border border-[--danger]">Real-time Alerts: Potential Theft / Anomaly</span>
+      </div>
+      <div class="overflow-y-auto max-h-64">
+        <table id="secure-table">
+          <thead class="sticky top-0 bg-[--surface]"><tr><th>Date</th><th>Time</th><th>Type</th><th>Weight</th><th>Status (Verified/Flagged)</th></tr></thead>
+          <tbody id="secure-body">
+            <tr><td colspan="5" class="text-center py-4 text-[--text-muted]">Loading records...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h3 class="card-title">Revenue vs. Expense Splits</h3>
+      <div class="h-48"><canvas id="chart-cluster-rev"></canvas></div>
+    </div>
+  </div>
+</main>
+
+<script>
+  // Chart defaults for dark theme
+  Chart.defaults.color = "#8BAEC8";
+  Chart.defaults.borderColor = "rgba(30,58,95,0.5)";
+  
+  const PALETTE = ["#00C853", "#3B82F6", "#F59E0B", "#8B5CF6", "#EC4899", "#EF4444", "#6B7280"];
+  
+  const charts = {
+    daily: new Chart(document.getElementById("chart-daily"), {
+      type: "bar", data: { labels: [], datasets: [
+        { label: "Intake", data: [], backgroundColor: "#00C853" },
+        { label: "Output", data: [], backgroundColor: "#3B82F6" }
+      ]}, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    }),
+    comp: new Chart(document.getElementById("chart-comp"), {
+      type: "doughnut", data: { labels: [], datasets: [{ data: [], backgroundColor: PALETTE, borderWidth: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } } }
+    }),
+    revenue: new Chart(document.getElementById("chart-revenue"), {
+      type: "bar", data: { labels: [], datasets: [{ label: "Est. Revenue (₹)", data: [], backgroundColor: "#3B82F6" }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    }),
+    monthly: new Chart(document.getElementById("chart-monthly"), {
+      type: "line", data: { labels: [], datasets: [{ label: "Plastic Vol", data: [], borderColor: "#00C853", backgroundColor: "rgba(0,200,83,0.1)", tension: 0.4, fill: true }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    }),
+    clusterPerf: new Chart(document.getElementById("chart-cluster-perf"), {
+      type: "bar", data: { labels: [], datasets: [{ label: "Efficiency %", data: [], backgroundColor: ["#3B82F6", "#00C853", "#3B82F6", "#00C853", "#3B82F6"] }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { max: 100 } } }
+    }),
+    projections: new Chart(document.getElementById("chart-projections"), {
+      type: "bar", data: { labels: [], datasets: [{ label: "Population", data: [], backgroundColor: "#F59E0B" }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    }),
+    clusterRev: new Chart(document.getElementById("chart-cluster-rev"), {
+      type: "doughnut", data: { labels: ["Revenue", "Expense", "Net Profit"], datasets: [{ data: [915.2, 527.1, 540.1], backgroundColor: ["#3B82F6", "#F59E0B", "#00C853"], borderWidth: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
+    })
+  };
+
+  async function fetchDashboardData() {
+    try {
+      // 1. KPIs
+      const kpi = await fetch("/api/kpis").then(r => r.json());
+      document.getElementById("kpi-total-items").textContent = kpi.total_items_detected || 0;
+      document.getElementById("kpi-alerts").textContent = kpi.active_alerts || 0;
+      
+      const inVal = kpi.vehicle_in || 0;
+      const outVal = kpi.vehicle_out || 0;
+      document.getElementById("val-in").textContent = (inVal * 1.5).toFixed(1);
+      document.getElementById("val-out").textContent = (outVal * 1.5).toFixed(1);
+      
+      // Scale animation
+      const total = inVal + outVal;
+      let angle = 0;
+      let pct = 100;
+      if (total > 0) {
+        const ratio = inVal / total;
+        angle = (0.5 - ratio) * 20; // -10 to +10 degrees
+        pct = Math.min(inVal, outVal) / Math.max(inVal, outVal) * 100;
+      }
+      document.getElementById("scale-beam").style.transform = `rotate(${angle}deg)`;
+      document.getElementById("pan-in").style.transform = `translateY(${angle * 2}px)`;
+      document.getElementById("pan-out").style.transform = `translateY(${-angle * 2}px)`;
+      document.getElementById("val-bal-pct").textContent = (isNaN(pct) ? 100 : pct).toFixed(1) + "%";
+
+      // 2. Machine Uptime
+      const uptime = await fetch("/api/machine_uptime").then(r => r.json());
+      const up = uptime.uptime_pct;
+      document.getElementById("val-uptime").textContent = up.toFixed(1) + "%";
+      // Gauge rotation: -45deg is 0%, 135deg is 100% (180deg total)
+      const rot = -45 + (up / 100 * 180);
+      document.getElementById("gauge-fill").style.transform = `rotate(${rot}deg)`;
+      // Needle rotation: -90deg is 0%, 90deg is 100% (180deg total)
+      const nRot = -90 + (up / 100 * 180);
+      document.getElementById("gauge-needle").style.transform = `translateX(-50%) rotate(${nRot}deg)`;
+
+      // 3. Daily Intake vs Output
+      const daily = await fetch("/api/daily_intake_output").then(r => r.json());
+      charts.daily.data.labels = daily.labels;
+      charts.daily.data.datasets[0].data = daily.intake;
+      charts.daily.data.datasets[1].data = daily.output;
+      charts.daily.update();
+
+      // 4. Waste Composition
+      const composition = { ...(kpi.waste_primary_composition || {}), ...(kpi.waste_composition || {}) };
+      const compEntries = Object.entries(composition);
+      if (compEntries.length) {
+        charts.comp.data.labels = compEntries.map(([k]) => k);
+        charts.comp.data.datasets[0].data = compEntries.map(([, v]) => v);
+        charts.comp.update();
+      }
+
+      // 5. Revenue
+      const rev = await fetch("/api/plastic_revenue").then(r => r.json());
+      const revEntries = Object.entries(rev.breakdown || {});
+      charts.revenue.data.labels = revEntries.map(([k]) => k);
+      charts.revenue.data.datasets[0].data = revEntries.map(([, v]) => v.est_revenue_inr);
+      charts.revenue.update();
+
+      // 6. Monthly Collection
+      const monthly = await fetch("/api/monthly_collection").then(r => r.json());
+      charts.monthly.data.labels = monthly.labels;
+      charts.monthly.data.datasets[0].data = monthly.data;
+      charts.monthly.update();
+
+      // 7. Cluster Performance
+      const perf = await fetch("/api/cluster_performance").then(r => r.json());
+      charts.clusterPerf.data.labels = perf.clusters;
+      charts.clusterPerf.data.datasets[0].data = perf.efficiency;
+      charts.clusterPerf.update();
+
+      // 8. Cluster Projections
+      const proj = await fetch("/api/cluster_projections").then(r => r.json());
+      charts.projections.data.labels = proj.clusters;
+      charts.projections.data.datasets[0].data = proj.projections;
+      charts.projections.update();
+
+      // 9. Secure Digital Record
+      const records = await fetch("/api/secure_digital_record").then(r => r.json());
+      const body = document.getElementById("secure-body");
+      if (records.records.length > 0) {
+        body.innerHTML = records.records.map(r => `
+          <tr>
+            <td>${r.date}</td>
+            <td>${r.time}</td>
+            <td>${r.type}</td>
+            <td>${r.weight}</td>
+            <td class="${r.status === 'Flagged' ? 'status-flagged' : 'status-verified'}">${r.status}</td>
+          </tr>
+        `).join("");
+      } else {
+        body.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-[--text-muted]">No records today</td></tr>`;
+      }
+
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  fetchDashboardData();
+  setInterval(fetchDashboardData, 10000);
+</script>
+</body>
+</html>

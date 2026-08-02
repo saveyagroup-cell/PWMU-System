@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — Ecobyte PWMU Intelligence Center</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }</style>
+</head>
+<body class="bg-[#F8FAFC] min-h-screen flex items-center justify-center px-4">
+  <div class="w-full max-w-md">
+    <div class="flex flex-col items-center justify-center gap-3 mb-6">
+      <div class="flex items-center justify-center gap-6">
+        <img src="{{ url_for('static', filename='images/logo_nit_raipur.png') }}" alt="NIT Raipur" class="h-10">
+        <img src="{{ url_for('static', filename='images/logo_cg_govt.png') }}" alt="Government of Chhattisgarh" class="h-10">
+        <img src="{{ url_for('static', filename='images/logo_unicef.png') }}" alt="UNICEF" class="h-8">
+      </div>
+      <p class="text-xs font-semibold text-slate-500 tracking-wide">NIT RAIPUR | GOVERNMENT OF CHHATTISGARH | UNICEF</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 rounded-lg bg-[#1E3A8A] flex items-center justify-center text-white font-bold text-xl mx-auto mb-3">E</div>
+        <h1 class="text-lg font-bold text-[#0F172A]">Ecobyte — PWMU Intelligence Center</h1>
+        <p class="text-xs text-slate-500 mt-1">Sign in to continue</p>
+      </div>
+
+      {% if error %}
+      <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-md px-3 py-2 mb-4">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" class="flex flex-col gap-3">
+        <div>
+          <label class="text-xs font-medium text-slate-600">Email</label>
+          <input type="email" name="email" required class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 mt-1" placeholder="you@example.com">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-slate-600">Password</label>
+          <input type="password" name="password" required class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 mt-1" placeholder="••••••••">
+        </div>
+        <button type="submit" class="bg-[#1E3A8A] hover:bg-blue-900 text-white text-sm font-semibold px-4 py-2.5 rounded-md mt-2">Sign In</button>
+      </form>
+
+      <p class="text-center text-sm text-slate-500 mt-5">
+        Don't have an account? <a href="{{ url_for('signup_page') }}" class="text-[#1E3A8A] font-semibold hover:underline">Sign Up</a>
+      </p>
+    </div>
+
+    <p class="text-center text-xs text-slate-400 mt-6">Team Ecobyte × Robosapiens · NIT Raipur</p>
+  </div>
+</body>
+</html>

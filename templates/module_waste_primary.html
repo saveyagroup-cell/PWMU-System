@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Primary Segregation — Ecobyte PWMU</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #F8FAFC; }
+  .video-box { aspect-ratio: 16/9; background: #0F172A; position: relative; overflow: hidden; }
+  .video-box img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  #overlay-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .progress-track { background: #E2E8F0; border-radius: 999px; height: 10px; overflow: hidden; }
+  .progress-fill  { height: 100%; border-radius: 999px; transition: width .4s ease; }
+</style>
+</head>
+<body class="text-slate-800">
+{% include "_header.html" %}
+
+<main class="max-w-[1300px] mx-auto px-6 py-6">
+  <a href="{{ url_for('home_page') }}" class="text-sm text-[#1E3A8A] font-semibold" data-i18n="common.back">← Back to Hub</a>
+
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-4">
+    <!-- Video panel -->
+    <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-[#0F172A]">♻️ Primary Waste Segregation</h3>
+          <p class="text-xs text-slate-500">Conveyor 1 — waste_seg2.pt (standalone)</p>
+        </div>
+        <span id="live-badge" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+      </div>
+
+      <!-- Video + canvas overlay (decoupled: raw video never waits on inference) -->
+      <div class="video-box">
+        <img id="feed-img" class="hidden" alt="Primary Segregation Live Feed">
+        <canvas id="overlay-canvas" class="hidden"></canvas>
+        <div id="feed-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M4 6h8a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/></svg>
+          <p class="text-xs px-4 text-center">Camera offline — click <strong>Start Camera</strong> or upload footage</p>
+        </div>
+      </div>
+
+      <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+        <button id="toggle-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start Camera</button>
+        <label class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white cursor-pointer hover:border-slate-300">
+          Upload Footage <input id="upload-input" type="file" accept="video/*" class="hidden">
+        </label>
+        <label class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white cursor-pointer hover:border-slate-300">
+          Upload Photo <input id="photo-upload" type="file" accept="image/*" class="hidden" onchange="handlePhoto(this)">
+        </label>
+        <a href="/api/download/video/waste_primary" class="text-xs font-medium text-[#1E3A8A] border border-blue-200 rounded-md px-3 py-1.5 bg-blue-50 hover:bg-blue-100">⬇ Video</a>
+        <a href="/api/report_pdf/waste_primary?period=all" class="text-xs font-medium text-white bg-[#1E3A8A] hover:bg-blue-900 rounded-md px-3 py-1.5">⬇ PDF Report</a>
+        <button onclick="fetch('/api/reset/waste_primary',{method:'POST'})" class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white hover:border-red-300 hover:text-red-500">↺ Reset</button>
+      </div>
+    </div>
+
+    <!-- Detection counts panel -->
+    <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <h3 class="text-sm font-bold text-slate-700 mb-1">Efficiency Indicator</h3>
+      <p class="text-[10px] text-slate-400 mb-3">Stable detections this session</p>
+      <div id="stage1-bars" class="space-y-3 text-sm">
+        <p class="text-slate-400 text-xs">No detections yet</p>
+      </div>
+      <div id="photo-results" class="mt-6 pt-4 border-t border-slate-100 hidden">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-bold text-slate-500 uppercase">Photo Analysis Result</h4>
+          <button onclick="document.getElementById('photo-results').classList.add('hidden')" class="text-[10px] text-slate-400 hover:text-slate-600">× Clear</button>
+        </div>
+        <img id="photo-result-img" class="w-full rounded-lg border border-slate-100 object-contain max-h-48" alt="Detection result">
+        <div id="photo-labels" class="flex flex-wrap gap-1 mt-2"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script src="{{ url_for('static', filename='js/module_common.js') }}"></script>
+<script>
+  // useRawFeed = true → raw video (/raw_feed/) + canvas overlay (/api/live_boxes/)
+  // This decouples video speed from YOLO inference speed — always smooth!
+  setupModulePanel("waste_primary", {{ 'true' if active else 'false' }}, true);
+
+  const PALETTE = ["#3B82F6", "#94A3B8", "#F59E0B", "#16A34A", "#DC2626", "#7C3AED"];
+
+  async function handlePhoto(input) {
+    if (!input.files[0]) return;
+    const statusLabel = input.closest('label');
+    const origText = statusLabel.childNodes[0].textContent.trim();
+    statusLabel.childNodes[0].textContent = ' ⏳ Processing...';
+
+    const formData = new FormData();
+    formData.append('image', input.files[0]);
+    try {
+      const res = await fetch('/api/infer_image/waste_primary', { method: 'POST', body: formData });
+      if (!res.ok) { throw new Error(await res.text()); }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      document.getElementById('photo-result-img').src = url;
+      document.getElementById('photo-results').classList.remove('hidden');
+
+      // Also parse last_boxes for label tags
+      const boxRes = await fetch('/api/live_boxes/waste_primary');
+      const boxData = await boxRes.json();
+      const labels = [...new Set((boxData.boxes || []).map(b => b.label))];
+      document.getElementById('photo-labels').innerHTML = labels.length
+        ? labels.map(l => `<span class="px-2 py-0.5 bg-emerald-50 border border-emerald-200 rounded text-[10px] font-bold text-emerald-700">${l}</span>`).join('')
+        : '<span class="text-slate-400 text-xs">No waste detected in photo</span>';
+    } catch(e) {
+      alert('Photo inference failed: ' + e.message);
+    }
+    statusLabel.childNodes[0].textContent = ' ' + origText;
+    input.value = '';
+  }
+
+  async function refreshCounts() {
+    try {
+      const res  = await fetch("/api/counts/waste_primary");
+      const data = await res.json();
+      const el   = document.getElementById("stage1-bars");
+      const entries = Object.entries(data);
+      if (!entries.length) {
+        el.innerHTML = `<p class="text-slate-400 text-xs">No detections yet</p>`;
+        return;
+      }
+      const max = Math.max(...entries.map(([, v]) => v), 1);
+      el.innerHTML = entries.map(([label, count], i) => `
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="font-medium text-slate-600">${label}</span>
+            <span class="font-semibold text-slate-800">${count}</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:${(count/max)*100}%; background:${PALETTE[i % PALETTE.length]}"></div>
+          </div>
+        </div>`).join("");
+    } catch (_) {}
+  }
+  refreshCounts();
+  setInterval(refreshCounts, 2000);
+</script>
+</body>
+</html>

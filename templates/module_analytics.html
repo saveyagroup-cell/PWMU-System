@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics & Audit Reports — Ecobyte PWMU</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #F8FAFC; }
+</style>
+</head>
+<body class="text-slate-800">
+{% include "_header.html" %}
+
+<main class="max-w-[1400px] mx-auto px-6 py-6">
+  <a href="{{ url_for('home_page') }}" class="text-sm text-[#1E3A8A] font-semibold" data-i18n="common.back">← Back to Hub</a>
+
+  <div class="flex items-center justify-between flex-wrap gap-3 mt-4 mb-6">
+    <div>
+      <h2 class="text-xl font-extrabold text-[#0F172A]">📊 Analytics &amp; Digital Audit Report Hub</h2>
+      <p class="text-sm text-slate-500">District Admin · SHG · Plant Operator ke liye consolidated view</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <select id="report-period" class="text-sm border border-slate-200 rounded-md px-3 py-1.5">
+        <option value="daily">Today</option>
+        <option value="weekly">This Week</option>
+        <option value="monthly">This Month</option>
+        <option value="all">All Time</option>
+      </select>
+      <button id="export-pdf-btn" class="bg-[#1E3A8A] hover:bg-blue-900 text-white text-sm font-semibold px-4 py-2 rounded-md">⬇ Export Full PDF Audit Report</button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <p class="text-xs text-slate-500 font-medium">Items Detected Today</p>
+      <p id="kpi-total-items" class="text-2xl font-extrabold text-[#0F172A] mt-1">0</p>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <p class="text-xs text-slate-500 font-medium">Processing Balance</p>
+      <p id="kpi-balance" class="text-2xl font-extrabold text-[#16A34A] mt-1">0</p>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <p class="text-xs text-slate-500 font-medium">Vehicle Entries</p>
+      <p id="kpi-vehicle-in" class="text-2xl font-extrabold text-[#1E3A8A] mt-1">0</p>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <p class="text-xs text-slate-500 font-medium">Active Security Alerts</p>
+      <p id="kpi-alerts" class="text-2xl font-extrabold text-[#DC2626] mt-1">0</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <h3 class="text-sm font-bold text-slate-700 mb-1">Hourly Waste Intake vs Vehicle Outflow</h3>
+      <p class="text-[10px] text-slate-400 mb-2">Conveyor detections (intake) vs Gate OUT crossings (outflow) — audit trail proxy</p>
+      <div class="h-64"><canvas id="chart-line"></canvas></div>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <h3 class="text-sm font-bold text-slate-700 mb-1">Daily Plastic Revenue Potential by Category</h3>
+      <p class="text-[10px] text-slate-400 mb-2">Estimated ₹ — see disclaimer at bottom</p>
+      <div class="h-64"><canvas id="chart-bar-revenue"></canvas></div>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <h3 class="text-sm font-bold text-slate-700 mb-1">Detected Waste Composition</h3>
+      <p class="text-[10px] text-slate-400 mb-2">Metal (Primary) + Plastic Types (Secondary) — only categories actually detected by the models</p>
+      <div class="h-64"><canvas id="chart-doughnut"></canvas></div>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <h3 class="text-sm font-bold text-slate-700 mb-1">Peak Vehicle Traffic Hours at Gate</h3>
+      <p class="text-[10px] text-slate-400 mb-2">Today's hourly crossings (IN + OUT)</p>
+      <div class="h-64"><canvas id="chart-bar-traffic"></canvas></div>
+    </div>
+  </div>
+
+  <p class="text-xs text-slate-400 text-center mb-6">
+    Revenue and tonnage figures are estimated from detection counts (avg. weight assumption), not a calibrated weighing scale —
+    see README for details on upgrading to real sensor data.
+  </p>
+</main>
+
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script>
+  const lineChart = new Chart(document.getElementById("chart-line"), {
+    type: "line",
+    data: { labels: [...Array(24).keys()], datasets: [
+      { label: "Waste Intake", data: Array(24).fill(0), borderColor: "#16A34A", backgroundColor: "rgba(22,163,74,0.1)", tension: 0.3 },
+      { label: "Vehicle Outflow", data: Array(24).fill(0), borderColor: "#DC2626", backgroundColor: "rgba(220,38,38,0.1)", tension: 0.3 },
+    ]},
+    options: { plugins: { legend: { position: "bottom" } }, scales: { y: { beginAtZero: true } } },
+  });
+
+  const revenueChart = new Chart(document.getElementById("chart-bar-revenue"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "Est. Revenue (₹)", data: [], backgroundColor: "#1E3A8A" }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+  });
+
+  const doughnutChart = new Chart(document.getElementById("chart-doughnut"), {
+    type: "doughnut",
+    data: { labels: ["No data yet"], datasets: [{ data: [1], backgroundColor: ["#E2E8F0"], borderWidth: 0 }] },
+    options: { plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } } },
+  });
+
+  const trafficChart = new Chart(document.getElementById("chart-bar-traffic"), {
+    type: "bar",
+    data: { labels: [...Array(24).keys()], datasets: [{ label: "Crossings", data: Array(24).fill(0), backgroundColor: "#F59E0B" }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+  });
+
+  const PALETTE = ["#1E3A8A", "#16A34A", "#DC2626", "#F59E0B", "#0EA5E9", "#7C3AED", "#64748B", "#94A3B8"];
+
+  async function refreshAll() {
+    try {
+      const kpiRes = await fetch("/api/kpis");
+      const kpi = await kpiRes.json();
+      document.getElementById("kpi-total-items").textContent = kpi.total_items_detected ?? 0;
+      document.getElementById("kpi-balance").textContent = kpi.processing_balance ?? 0;
+      document.getElementById("kpi-vehicle-in").textContent = kpi.vehicle_in ?? 0;
+      document.getElementById("kpi-alerts").textContent = kpi.active_alerts ?? 0;
+
+      const composition = { ...(kpi.waste_primary_composition || {}), ...(kpi.waste_composition || {}) };
+      const compEntries = Object.entries(composition);
+      if (compEntries.length) {
+        doughnutChart.data.labels = compEntries.map(([k]) => k);
+        doughnutChart.data.datasets[0].data = compEntries.map(([, v]) => v);
+        doughnutChart.data.datasets[0].backgroundColor = PALETTE;
+        doughnutChart.update();
+      }
+    } catch (e) {}
+
+    try {
+      const revRes = await fetch("/api/plastic_revenue");
+      const rev = await revRes.json();
+      const entries = Object.entries(rev.breakdown || {});
+      revenueChart.data.labels = entries.map(([k]) => k);
+      revenueChart.data.datasets[0].data = entries.map(([, v]) => v.est_revenue_inr);
+      revenueChart.update();
+    } catch (e) {}
+
+    try {
+      const [primaryH, secondaryH, gateH] = await Promise.all([
+        fetch("/api/hourly/waste_primary?period=daily").then(r => r.json()),
+        fetch("/api/hourly/waste_secondary?period=daily").then(r => r.json()),
+        fetch("/api/hourly/gate?period=daily").then(r => r.json()),
+      ]);
+      const hours = [...Array(24).keys()];
+      const intake = hours.map(h => (primaryH[h] || 0) + (secondaryH[h] || 0));
+      lineChart.data.datasets[0].data = intake;
+      lineChart.data.datasets[1].data = hours.map(h => gateH[h] || 0);  // gate log includes both IN/OUT rows; used as outflow proxy
+      lineChart.update();
+
+      trafficChart.data.datasets[0].data = hours.map(h => gateH[h] || 0);
+      trafficChart.update();
+    } catch (e) {}
+  }
+
+  document.getElementById("export-pdf-btn").addEventListener("click", () => {
+    const period = document.getElementById("report-period").value;
+    window.location.href = `/api/report_pdf/full?period=${period}`;
+  });
+
+  refreshAll();
+  setInterval(refreshAll, 10000);
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Overview — PWMU Control Room{% endblock %}
+{% block content %}
+<div class="hero">
+  <h1>Unified Waste & Security Intelligence</h1>
+  <p>4 YOLO-powered modules running from one dashboard — live camera or uploaded video, all in one place.</p>
+</div>
+
+<div class="module-grid">
+  <a class="module-card" href="{{ url_for('waste_page') }}">
+    <div class="icon">♻️</div>
+    <h3>Waste Segregation</h3>
+    <p>Dual YOLO models detect plastic material &amp; RIC type (PET, HDPE, PVC, LDPE, PP, PS &amp; more) in real time.</p>
+    <span class="status-pill {{ 'on' if status.waste else 'off' }}">{{ 'LIVE' if status.waste else 'IDLE' }}</span>
+  </a>
+
+  <a class="module-card" href="{{ url_for('vehicle_page') }}">
+    <div class="icon">🚛</div>
+    <h3>Vehicle IN/OUT Count</h3>
+    <p>YOLOv8 + ByteTrack line-crossing counter for gate traffic — live camera or uploaded footage.</p>
+    <span class="status-pill {{ 'on' if status.vehicle else 'off' }}">{{ 'LIVE' if status.vehicle else 'IDLE' }}</span>
+  </a>
+
+  <a class="module-card" href="{{ url_for('plate_page') }}">
+    <div class="icon">🔎</div>
+    <h3>Number Plate Recognition</h3>
+    <p>YOLOv8 plate detector + EasyOCR. Plate crops &amp; readings auto-saved to Supabase.</p>
+    <span class="status-pill {{ 'on' if status.plate else 'off' }}">{{ 'LIVE' if status.plate else 'IDLE' }}</span>
+  </a>
+
+  <a class="module-card" href="{{ url_for('thief_page') }}">
+    <div class="icon">🚨</div>
+    <h3>Thief / Loitering Detection</h3>
+    <p>Zone-based loitering &amp; unattended-object alerts with Telegram notification and Supabase capture log.</p>
+    <span class="status-pill {{ 'on' if status.thief else 'off' }}">{{ 'LIVE' if status.thief else 'IDLE' }}</span>
+  </a>
+</div>
+{% endblock %}

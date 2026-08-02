@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Segregation — Ecobyte PWMU</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #F8FAFC; }
+  .video-box { aspect-ratio: 16/9; background: #0F172A; position: relative; overflow: hidden; }
+  .video-box img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .overlay-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .progress-track { background: #E2E8F0; border-radius: 999px; height: 10px; overflow: hidden; }
+  .progress-fill  { height: 100%; border-radius: 999px; transition: width .4s ease; }
+</style>
+</head>
+<body class="text-slate-800">
+{% include "_header.html" %}
+
+<main class="max-w-[1500px] mx-auto px-6 py-6">
+  <h2 class="text-xl font-extrabold text-[#0F172A] mb-5" data-i18n="nav.segregation">AI Segregation</h2>
+
+  <!-- ===================== PRIMARY ===================== -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+    <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-[#0F172A]">♻️ Primary Waste Segregation</h3>
+          <p class="text-[10px] text-slate-400">Conveyor 1 — waste_seg2.pt (standalone)</p>
+        </div>
+        <span id="live-badge-waste_primary" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+      </div>
+      <div class="video-box">
+        <img id="feed-img-waste_primary" class="hidden" alt="Primary Feed">
+        <canvas id="overlay-waste_primary" class="overlay-canvas hidden"></canvas>
+        <div id="feed-placeholder-waste_primary" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M4 6h8a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/></svg>
+          <p class="text-xs text-center px-4">Camera offline — click Start or upload footage</p>
+        </div>
+      </div>
+      <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+        <button id="toggle-btn-waste_primary" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start Camera</button>
+        <label class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white cursor-pointer hover:border-slate-300">
+          Upload <input id="upload-input-waste_primary" type="file" accept="video/*" class="hidden">
+        </label>
+        <a href="/api/report_pdf/waste_primary?period=all" class="text-xs font-medium text-white bg-[#1E3A8A] hover:bg-blue-900 rounded-md px-3 py-1.5">⬇ PDF</a>
+        <button onclick="fetch('/api/reset/waste_primary',{method:'POST'})" class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white hover:border-red-300 hover:text-red-500">↺ Reset</button>
+      </div>
+    </div>
+    <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <h4 class="text-sm font-bold text-slate-700 mb-1">Efficiency Indicator</h4>
+      <p class="text-[10px] text-slate-400 mb-3">Stable detections this session</p>
+      <div id="stage1-bars" class="space-y-3 text-sm"><p class="text-slate-400 text-xs">No records available</p></div>
+    </div>
+  </div>
+
+  <!-- ===================== SECONDARY ===================== -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+    <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-[#0F172A]">🧪 Secondary Plastic Classification</h3>
+          <p class="text-[10px] text-slate-400">Conveyor 2 — 7types_final.pt (standalone)</p>
+        </div>
+        <span id="live-badge-waste_secondary" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+      </div>
+      <div class="video-box">
+        <img id="feed-img-waste_secondary" class="hidden" alt="Secondary Feed">
+        <canvas id="overlay-waste_secondary" class="overlay-canvas hidden"></canvas>
+        <div id="feed-placeholder-waste_secondary" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M4 6h8a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/></svg>
+          <p class="text-xs text-center px-4">Camera offline — click Start or upload footage</p>
+        </div>
+      </div>
+      <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+        <button id="toggle-btn-waste_secondary" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start Camera</button>
+        <label class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white cursor-pointer hover:border-slate-300">
+          Upload <input id="upload-input-waste_secondary" type="file" accept="video/*" class="hidden">
+        </label>
+        <a href="/api/report_pdf/waste_secondary?period=all" class="text-xs font-medium text-white bg-[#1E3A8A] hover:bg-blue-900 rounded-md px-3 py-1.5">⬇ PDF</a>
+        <button onclick="fetch('/api/reset/waste_secondary',{method:'POST'})" class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white hover:border-red-300 hover:text-red-500">↺ Reset</button>
+      </div>
+    </div>
+    <div class="lg:col-span-2 flex flex-col gap-4">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <h4 class="text-sm font-bold text-slate-700 mb-1">Estimated Recycling Revenue</h4>
+        <p class="text-[10px] text-slate-400 mb-2">Estimated from detection counts (not a calibrated scale)</p>
+        <p id="revenue" class="text-2xl font-extrabold text-[#16A34A]">₹0</p>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div class="h-40"><canvas id="pie-chart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mt-5">
+    <h4 class="text-sm font-bold text-slate-700 mb-3">Plastic Type Breakdown</h4>
+    <div id="stage2-bars" class="space-y-3 text-sm"><p class="text-slate-400 text-xs">No records available</p></div>
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script>
+// -----------------------------------------------------------------------
+// Deterministic per-label color (same label = same color, always)
+// -----------------------------------------------------------------------
+const BOX_COLORS = [
+  "#16A34A", "#2563EB", "#DC2626", "#D97706",
+  "#7C3AED", "#0EA5E9", "#DB2777", "#65A30D",
+];
+function labelColor(label) {
+  let h = 0;
+  for (let i = 0; i < label.length; i++) h = (h * 31 + label.charCodeAt(i)) >>> 0;
+  return BOX_COLORS[h % BOX_COLORS.length];
+}
+
+// -----------------------------------------------------------------------
+// Per-panel setup — COMPLETELY INDEPENDENT state per panel
+// Each panel has its own img, canvas, polling timer, ResizeObserver.
+// One panel starting/stopping has ZERO effect on the other.
+// -----------------------------------------------------------------------
+function setupPanel(name) {
+  const feedImg    = document.getElementById(`feed-img-${name}`);
+  const overlay    = document.getElementById(`overlay-${name}`);
+  const octx       = overlay.getContext("2d");
+  const placeholder = document.getElementById(`feed-placeholder-${name}`);
+  const liveBadge  = document.getElementById(`live-badge-${name}`);
+  const toggleBtn  = document.getElementById(`toggle-btn-${name}`);
+  const uploadInput = document.getElementById(`upload-input-${name}`);
+
+  // Each panel owns its own timer + observer — no shared state
+  let boxesPollTimer = null;
+  let resizeObs      = null;
+
+  function syncCanvas() {
+    const r = feedImg.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) {
+      overlay.width  = r.width;
+      overlay.height = r.height;
+    }
+  }
+
+  function drawBoxes(boxes, srcW, srcH) {
+    syncCanvas();
+    octx.clearRect(0, 0, overlay.width, overlay.height);
+    if (!boxes || !boxes.length) return;
+    const sx = overlay.width  / (srcW || 1);
+    const sy = overlay.height / (srcH || 1);
+
+    boxes.forEach((b) => {
+      const x1 = b.x1 * sx, y1 = b.y1 * sy;
+      const bw = (b.x2 - b.x1) * sx, bh = (b.y2 - b.y1) * sy;
+      const color = labelColor(b.label || "");
+      const confStr = b.conf != null ? ` ${Number(b.conf).toFixed(2)}` : "";
+      const text = `${b.label}${confStr}`;
+
+      // Box
+      octx.strokeStyle = color; octx.lineWidth = 2.5;
+      octx.strokeRect(x1, y1, bw, bh);
+
+      // Label pill
+      octx.font = "bold 12px 'Segoe UI', sans-serif";
+      const tw  = octx.measureText(text).width;
+      const lh  = 17;
+      const ly  = Math.max(0, y1 - lh - 1);
+      octx.fillStyle = color;
+      octx.beginPath();
+      octx.roundRect ? octx.roundRect(x1, ly, tw + 8, lh, 3)
+                     : octx.rect(x1, ly, tw + 8, lh);
+      octx.fill();
+      octx.fillStyle = "#fff";
+      octx.fillText(text, x1 + 4, ly + lh - 3);
+    });
+  }
+
+  async function pollBoxes() {
+    try {
+      const res  = await fetch(`/api/live_boxes/${name}`);
+      const data = await res.json();
+      drawBoxes(data.boxes, data.width, data.height);
+    } catch (_) {}
+  }
+
+  function setFeed(on) {
+    if (on) {
+      // Raw feed — video is NEVER throttled by inference speed
+      feedImg.src = `/raw_feed/${name}?t=${Date.now()}`;
+      feedImg.classList.remove("hidden");
+      overlay.classList.remove("hidden");
+      placeholder.classList.add("hidden");
+      liveBadge.classList.remove("hidden");
+      toggleBtn.textContent = "Stop Camera";
+      toggleBtn.classList.replace("bg-emerald-600", "bg-red-600");
+      toggleBtn.classList.replace("hover:bg-emerald-700", "hover:bg-red-700");
+
+      feedImg.onload = syncCanvas;
+      if (window.ResizeObserver) {
+        resizeObs = new ResizeObserver(syncCanvas);
+        resizeObs.observe(feedImg);
+      }
+      boxesPollTimer = setInterval(pollBoxes, 200);
+    } else {
+      feedImg.removeAttribute("src");
+      feedImg.classList.add("hidden");
+      overlay.classList.add("hidden");
+      placeholder.classList.remove("hidden");
+      liveBadge.classList.add("hidden");
+      toggleBtn.textContent = "Start Camera";
+      toggleBtn.classList.replace("bg-red-600", "bg-emerald-600");
+      toggleBtn.classList.replace("hover:bg-red-700", "hover:bg-emerald-700");
+
+      octx.clearRect(0, 0, overlay.width, overlay.height);
+      if (boxesPollTimer) { clearInterval(boxesPollTimer); boxesPollTimer = null; }
+      if (resizeObs)      { resizeObs.disconnect(); resizeObs = null; }
+    }
+  }
+
+  toggleBtn.addEventListener("click", async () => {
+    const res  = await fetch(`/api/toggle/${name}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+    setFeed((await res.json()).active);
+  });
+
+  if (uploadInput) {
+    uploadInput.addEventListener("change", async () => {
+      if (!uploadInput.files.length) return;
+      const fd = new FormData(); fd.append("video", uploadInput.files[0]);
+      toggleBtn.disabled = true;
+      const res = await fetch(`/api/upload/${name}`, { method: "POST", body: fd });
+      toggleBtn.disabled = false;
+      setFeed((await res.json()).active);
+    });
+  }
+}
+
+["waste_primary", "waste_secondary"].forEach(setupPanel);
+
+// -----------------------------------------------------------------------
+// Charts + counts
+// -----------------------------------------------------------------------
+const PALETTE1 = ["#3B82F6", "#94A3B8", "#F59E0B", "#16A34A", "#DC2626"];
+const PALETTE2 = ["#1E3A8A", "#16A34A", "#DC2626", "#F59E0B", "#0EA5E9", "#7C3AED", "#64748B"];
+
+const chart = new Chart(document.getElementById("pie-chart"), {
+  type: "doughnut",
+  data: { labels: ["No data"], datasets: [{ data: [1], backgroundColor: ["#E2E8F0"], borderWidth: 0 }] },
+  options: { plugins: { legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } }, cutout: "62%", animation: { duration: 400 } },
+});
+
+function renderBars(elId, data, palette) {
+  const el = document.getElementById(elId);
+  const entries = Object.entries(data);
+  if (!entries.length) { el.innerHTML = `<p class="text-slate-400 text-xs">No records available</p>`; return; }
+  const max = Math.max(...entries.map(([, v]) => v), 1);
+  el.innerHTML = entries.map(([label, count], i) => `
+    <div>
+      <div class="flex justify-between text-xs mb-1">
+        <span class="font-medium text-slate-600">${label}</span>
+        <span class="font-semibold text-slate-800">${count}</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${(count/max)*100}%; background:${palette[i % palette.length]}"></div></div>
+    </div>`).join("");
+}
+
+async function refreshAll() {
+  try {
+    const r1 = await fetch("/api/counts/waste_primary");
+    renderBars("stage1-bars", await r1.json(), PALETTE1);
+  } catch (_) {}
+  try {
+    const r2   = await fetch("/api/counts/waste_secondary");
+    const data = await r2.json();
+    renderBars("stage2-bars", data, PALETTE2);
+    const entries = Object.entries(data);
+    if (entries.length) {
+      chart.data.labels = entries.map(([k]) => k);
+      chart.data.datasets[0].data = entries.map(([, v]) => v);
+      chart.data.datasets[0].backgroundColor = PALETTE2.slice(0, entries.length);
+      chart.update();
+    }
+  } catch (_) {}
+  try {
+    const revRes = await fetch("/api/plastic_revenue");
+    const rev    = await revRes.json();
+    document.getElementById("revenue").textContent =
+      `₹${(rev.total_est_revenue_inr ?? 0).toLocaleString("en-IN")}`;
+  } catch (_) {}
+}
+refreshAll();
+setInterval(refreshAll, 2000);
+</script>
+</body>
+</html>

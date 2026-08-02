@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Thief Detection — PWMU{% endblock %}
+{% block content %}
+<div class="grid">
+  <div class="panel">
+    <h2>Live Detection <span class="muted">Loitering + unattended-object zone alert</span></h2>
+    <div class="video-wrap">
+      <img id="feed-img" style="display:none;">
+      <div id="feed-placeholder" class="video-placeholder">Camera is off. Click "Start Camera" to arm security monitoring.</div>
+      <div id="live-badge" class="live-badge"><span class="r"></span>LIVE</div>
+    </div>
+    <div class="controls">
+      <button id="toggle-btn" class="btn btn-primary">Start Camera</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Recent Alerts <span class="muted">Auto-saved to Supabase + Telegram</span></h2>
+    <table>
+      <thead><tr><th>Snapshot</th><th>Reason</th><th>Time</th></tr></thead>
+      <tbody id="alerts-body">
+        {% for a in recent %}
+        <tr>
+          <td>{% if a.url %}<img class="thumb" src="{{ a.url }}">{% else %}—{% endif %}</td>
+          <td><span class="badge warn">{{ a.reason }}</span></td>
+          <td>{{ a.time }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="empty-state">No alerts yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+initModule("thief", {
+  initialActive: {{ 'true' if active else 'false' }},
+  onCounts: (data) => {
+    const body = document.getElementById("alerts-body");
+    const rows = data.recent || [];
+    if (!rows.length) {
+      body.innerHTML = '<tr><td colspan="3" class="empty-state">No alerts yet</td></tr>';
+      return;
+    }
+    body.innerHTML = rows.map(a => `
+      <tr>
+        <td>${a.url ? `<img class="thumb" src="${a.url}">` : '—'}</td>
+        <td><span class="badge warn">${a.reason}</span></td>
+        <td>${a.time}</td>
+      </tr>`).join("");
+  }
+});
+</script>
+{% endblock %}

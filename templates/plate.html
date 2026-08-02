@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Number Plate Recognition — PWMU{% endblock %}
+{% block content %}
+<div class="grid">
+  <div class="panel">
+    <h2>Live Detection <span class="muted">YOLOv8 + EasyOCR</span></h2>
+    <div class="video-wrap">
+      <img id="feed-img" style="display:none;">
+      <div id="feed-placeholder" class="video-placeholder">Camera is off. Click "Start Camera" to begin ANPR.</div>
+      <div id="live-badge" class="live-badge"><span class="r"></span>LIVE</div>
+    </div>
+    <div class="controls">
+      <button id="toggle-btn" class="btn btn-primary">Start Camera</button>
+      <form id="upload-form" style="display:flex; gap:8px; align-items:center;">
+        <input id="upload-input" type="file" name="video" accept="video/*">
+        <button type="submit" class="btn btn-outline">Process Video</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Recent Plates <span class="muted">Auto-saved to Supabase</span></h2>
+    <table>
+      <thead><tr><th>Snapshot</th><th>Plate</th><th>Conf</th><th>Time</th></tr></thead>
+      <tbody id="plates-body">
+        {% for p in recent %}
+        <tr>
+          <td>{% if p.url %}<img class="thumb" src="{{ p.url }}">{% else %}—{% endif %}</td>
+          <td><b>{{ p.plate }}</b></td>
+          <td>{{ p.conf }}</td>
+          <td>{{ p.time }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty-state">No plates detected yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+initModule("plate", {
+  initialActive: {{ 'true' if active else 'false' }},
+  onCounts: (data) => {
+    const body = document.getElementById("plates-body");
+    const rows = data.recent || [];
+    if (!rows.length) {
+      body.innerHTML = '<tr><td colspan="4" class="empty-state">No plates detected yet</td></tr>';
+      return;
+    }
+    body.innerHTML = rows.map(p => `
+      <tr>
+        <td>${p.url ? `<img class="thumb" src="${p.url}">` : '—'}</td>
+        <td><b>${p.plate}</b></td>
+        <td>${p.conf}</td>
+        <td>${p.time}</td>
+      </tr>`).join("");
+  }
+});
+</script>
+{% endblock %}

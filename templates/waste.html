@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Waste Segregation — PWMU{% endblock %}
+{% block content %}
+<div class="grid">
+  <div class="panel">
+    <h2>Live Detection <span class="muted">Plastic material + RIC type</span></h2>
+    <div class="video-wrap">
+      <img id="feed-img" style="display:none;">
+      <div id="feed-placeholder" class="video-placeholder">Camera is off. Click "Start Camera" or upload a video below.</div>
+      <div id="live-badge" class="live-badge"><span class="r"></span>LIVE</div>
+    </div>
+    <div class="controls">
+      <button id="toggle-btn" class="btn btn-primary">Start Camera</button>
+      <button id="reset-btn" class="btn btn-outline">Reset Counts</button>
+      <form id="upload-form" style="display:flex; gap:8px; align-items:center;">
+        <input id="upload-input" type="file" name="video" accept="video/*">
+        <button type="submit" class="btn btn-outline">Process Video</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Model Status</h2>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="val {{ 'in' if model_status.material_model_loaded else 'out' }}">{{ '✓' if model_status.material_model_loaded else '✕' }}</div>
+        <div class="lbl">Material Model</div>
+      </div>
+      <div class="stat-card">
+        <div class="val {{ 'in' if model_status.type_model_loaded else 'out' }}">{{ '✓' if model_status.type_model_loaded else '✕' }}</div>
+        <div class="lbl">Type Model (opt.)</div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:20px;">Detected Class Counts</h2>
+    <table id="counts-table">
+      <thead><tr><th>Class</th><th>Count</th></tr></thead>
+      <tbody id="counts-body">
+        {% for label, cnt in counts.items() %}
+        <tr><td>{{ label }}</td><td>{{ cnt }}</td></tr>
+        {% else %}
+        <tr><td colspan="2" class="empty-state">No detections yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+initModule("waste", {
+  initialActive: {{ 'true' if active else 'false' }},
+  onCounts: (data) => {
+    const body = document.getElementById("counts-body");
+    const entries = Object.entries(data);
+    if (!entries.length) {
+      body.innerHTML = '<tr><td colspan="2" class="empty-state">No detections yet</td></tr>';
+      return;
+    }
+    body.innerHTML = entries.map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+  }
+});
+</script>
+{% endblock %}

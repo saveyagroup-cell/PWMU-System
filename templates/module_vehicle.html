@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vehicle Counter — Ecobyte PWMU</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #F8FAFC; }
+  .video-box { aspect-ratio: 16/9; background:#0F172A; }
+  .video-box img { width:100%; height:100%; object-fit:contain; }
+</style>
+</head>
+<body class="text-slate-800">
+{% include "_header.html" %}
+
+<main class="max-w-[1300px] mx-auto px-6 py-6">
+  <a href="{{ url_for('home_page') }}" class="text-sm text-[#1E3A8A] font-semibold" data-i18n="common.back">← Back to Hub</a>
+
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-4">
+    <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-[#0F172A]">🚗 Vehicle Entry/Exit Counter</h3>
+          <p class="text-xs text-slate-500">Directional line-crossing IN/OUT counter</p>
+        </div>
+        <span id="live-badge" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+      </div>
+      <div class="video-box relative">
+        <img id="feed-img" class="hidden">
+        <div id="feed-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs px-4 text-center">Camera offline — click Start or upload footage</div>
+      </div>
+      <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+        <button id="toggle-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start Camera</button>
+        <button id="reset-btn" class="text-xs font-medium text-slate-600 border border-slate-200 rounded-md px-3 py-1.5 bg-white hover:bg-slate-50">Reset Counts</button>
+        <label class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white cursor-pointer hover:border-slate-300">
+          Upload Footage <input id="upload-input" type="file" accept="video/*" class="hidden">
+        </label>
+        <a href="/api/download/video/vehicle" class="text-xs font-medium text-[#1E3A8A] border border-blue-200 rounded-md px-3 py-1.5 bg-blue-50 hover:bg-blue-100">⬇ Video</a>
+        <a href="/api/report_pdf/vehicle?period=all" class="text-xs font-medium text-white bg-[#1E3A8A] hover:bg-blue-900 rounded-md px-3 py-1.5">⬇ PDF Report</a>
+      </div>
+    </div>
+
+    <div class="lg:col-span-2 flex flex-col gap-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <p class="text-xs text-slate-500 font-medium">Vehicle IN</p>
+          <p id="kpi-in" class="text-3xl font-extrabold text-[#16A34A] mt-1">{{ counts.in }}</p>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <p class="text-xs text-slate-500 font-medium">Vehicle OUT</p>
+          <p id="kpi-out" class="text-3xl font-extrabold text-[#DC2626] mt-1">{{ counts.out }}</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <h4 class="text-sm font-bold text-slate-700 mb-2">USP 3 — Fraud-Proof Gate Audit</h4>
+        <p class="text-xs text-slate-500">Vehicle counts here cross-reference with the ANPR module's plate log to reduce fake intake reporting. Vehicle classes tracked: car, motorbike, bus, truck.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script src="{{ url_for('static', filename='js/module_common.js') }}"></script>
+<script>
+  setupModulePanel("vehicle", {{ 'true' if active else 'false' }});
+  document.getElementById("reset-btn").addEventListener("click", async () => {
+    await fetch("/api/reset/vehicle", { method: "POST" });
+    refreshCounts();
+  });
+  async function refreshCounts() {
+    try {
+      const res = await fetch("/api/counts/vehicle");
+      const data = await res.json();
+      document.getElementById("kpi-in").textContent = data.in ?? 0;
+      document.getElementById("kpi-out").textContent = data.out ?? 0;
+    } catch (e) {}
+  }
+  refreshCounts();
+  setInterval(refreshCounts, 2500);
+</script>
+</body>
+</html>

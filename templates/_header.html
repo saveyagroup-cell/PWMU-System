@@ -1,0 +1,124 @@
+<!--
+  Shared header + navbar. Included on every protected page.
+  Expects `active_nav` (one of 'home','gate','segregation','dashboard') and
+  `user_profile` (dict with name/pwm_unit/district, or None) in context.
+-->
+<header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+  <!-- Institutional identity strip — logos centered, text below (matches official reference layout) -->
+  <div class="bg-[#0F172A] py-3">
+    <div class="max-w-[1500px] mx-auto px-6 flex flex-col items-center">
+      <div class="flex items-center gap-8">
+        <img src="{{ url_for('static', filename='images/logo_nit_raipur.png') }}" alt="National Institute of Technology Raipur" class="h-10">
+        <img src="{{ url_for('static', filename='images/logo_cg_govt.png') }}" alt="Government of Chhattisgarh" class="h-10">
+        <img src="{{ url_for('static', filename='images/logo_unicef.png') }}" alt="UNICEF" class="h-8">
+      </div>
+      <p class="text-white text-xs font-semibold tracking-wide mt-2">NIT RAIPUR | GOVERNMENT OF CHHATTISGARH | UNICEF</p>
+    </div>
+  </div>
+
+  <!-- Main header row -->
+  <div class="max-w-[1500px] mx-auto px-6 py-3 flex items-center justify-between flex-wrap gap-3">
+    <a href="{{ url_for('home_page') }}" class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-[#1E3A8A] flex items-center justify-center text-white font-bold text-lg shrink-0">E</div>
+      <div>
+        <h1 class="text-base font-bold text-[#0F172A] leading-tight" data-i18n="header.title">Ecobyte — PWMU Intelligence Center</h1>
+        <div class="flex items-center gap-2 mt-0.5">
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200" data-i18n="header.badge1">Digital India Initiative</span>
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200" data-i18n="header.badge2">Swachh Bharat Mission</span>
+        </div>
+      </div>
+    </a>
+
+    <div class="flex items-center gap-3">
+      <select id="lang-switcher" class="bg-slate-50 text-slate-600 text-xs rounded-full px-3 py-1.5 border border-slate-200">
+        <option value="en">English</option>
+        <option value="hi">हिंदी</option>
+        <option value="cg">छत्तीसगढ़ी</option>
+      </select>
+      <div id="live-clock" class="text-xs font-medium text-slate-500 tabular-nums hidden lg:block">—</div>
+
+      <div class="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-xs font-semibold text-emerald-700" data-i18n="header.online">System Online</span>
+      </div>
+
+      <!-- Profile dropdown -->
+      <div class="relative">
+        <button id="profile-btn" class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600">
+          <span class="w-6 h-6 rounded-full bg-[#1E3A8A] text-white flex items-center justify-center text-[10px] font-bold">
+            {{ (user_profile.name[0] if user_profile and user_profile.name else "U") | upper }}
+          </span>
+          {{ user_profile.name if user_profile and user_profile.name else "Account" }}
+        </button>
+        <div id="profile-menu" class="hidden absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-lg shadow-lg py-2 text-sm">
+          {% if user_profile %}
+          <div class="px-4 py-2 border-b border-slate-100">
+            <p class="font-semibold text-slate-700">{{ user_profile.name }}</p>
+            <p class="text-xs text-slate-400">{{ user_profile.pwm_unit }} · {{ user_profile.district }}</p>
+          </div>
+          {% endif %}
+          <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-red-600 hover:bg-red-50 font-medium">Sign Out</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 4-SECTION NAVBAR ===================== -->
+  <nav class="max-w-[1500px] mx-auto px-6 py-2.5 border-t border-slate-100 flex items-center justify-between">
+    <div id="nav-links" class="hidden md:flex items-center gap-1.5 flex-wrap">
+      <a href="{{ url_for('home_page') }}" class="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full transition-all duration-150 {{ 'bg-[#1E3A8A] text-white shadow-sm' if active_nav == 'home' else 'text-slate-600 hover:bg-slate-100 hover:text-[#1E3A8A]' }}">
+        🏠 <span data-i18n="nav.home">Home</span>
+      </a>
+      <a href="{{ url_for('gate_security_page') }}" class="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full transition-all duration-150 {{ 'bg-[#1E3A8A] text-white shadow-sm' if active_nav == 'gate' else 'text-slate-600 hover:bg-slate-100 hover:text-[#1E3A8A]' }}">
+        🛡️ <span data-i18n="nav.gate">Gate &amp; Security</span>
+      </a>
+      <a href="{{ url_for('ai_segregation_page') }}" class="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full transition-all duration-150 {{ 'bg-[#1E3A8A] text-white shadow-sm' if active_nav == 'segregation' else 'text-slate-600 hover:bg-slate-100 hover:text-[#1E3A8A]' }}">
+        ♻️ <span data-i18n="nav.segregation">AI Segregation</span>
+      </a>
+      <a href="{{ url_for('dashboard_page') }}" class="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full transition-all duration-150 {{ 'bg-[#1E3A8A] text-white shadow-sm' if active_nav == 'dashboard' else 'text-slate-600 hover:bg-slate-100 hover:text-[#1E3A8A]' }}">
+        📊 <span data-i18n="nav.dashboard">Dashboard</span>
+      </a>
+    </div>
+
+    <!-- Mobile hamburger -->
+    <button id="nav-toggle" class="md:hidden flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-600">
+      <span>☰</span> Menu
+    </button>
+  </nav>
+
+  <!-- Mobile dropdown menu -->
+  <div id="nav-mobile" class="hidden md:hidden border-t border-slate-100 px-4 py-2 flex flex-col gap-1 bg-white">
+    <a href="{{ url_for('home_page') }}" class="px-3 py-2.5 rounded-lg text-sm font-semibold {{ 'bg-[#1E3A8A] text-white' if active_nav == 'home' else 'text-slate-600 hover:bg-slate-50' }}">🏠 Home</a>
+    <a href="{{ url_for('gate_security_page') }}" class="px-3 py-2.5 rounded-lg text-sm font-semibold {{ 'bg-[#1E3A8A] text-white' if active_nav == 'gate' else 'text-slate-600 hover:bg-slate-50' }}">🛡️ Gate &amp; Security</a>
+    <a href="{{ url_for('ai_segregation_page') }}" class="px-3 py-2.5 rounded-lg text-sm font-semibold {{ 'bg-[#1E3A8A] text-white' if active_nav == 'segregation' else 'text-slate-600 hover:bg-slate-50' }}">♻️ AI Segregation</a>
+    <a href="{{ url_for('dashboard_page') }}" class="px-3 py-2.5 rounded-lg text-sm font-semibold {{ 'bg-[#1E3A8A] text-white' if active_nav == 'dashboard' else 'text-slate-600 hover:bg-slate-50' }}">📊 Dashboard</a>
+  </div>
+</header>
+
+<script>
+  document.getElementById("nav-toggle")?.addEventListener("click", () => {
+    document.getElementById("nav-mobile").classList.toggle("hidden");
+  });
+</script>
+
+<script>
+  document.getElementById("profile-btn")?.addEventListener("click", () => {
+    document.getElementById("profile-menu").classList.toggle("hidden");
+  });
+  document.addEventListener("click", (e) => {
+    const btn = document.getElementById("profile-btn");
+    const menu = document.getElementById("profile-menu");
+    if (menu && btn && !btn.contains(e.target) && !menu.contains(e.target)) menu.classList.add("hidden");
+  });
+  function tickClock() {
+    const el = document.getElementById("live-clock");
+    if (!el) return;
+    const now = new Date();
+    el.textContent = now.toLocaleString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true,
+    });
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+</script>

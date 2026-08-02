@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home — Ecobyte PWMU Intelligence Center</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #F8FAFC; }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -8px rgba(15,23,42,0.15); }
+  .card { transition: all .18s ease; }
+</style>
+</head>
+<body class="text-slate-800">
+
+{% include "_header.html" %}
+
+<main class="max-w-[1500px] mx-auto px-6 py-8">
+
+  <!-- ===================== CENTERED PROJECT IDENTITY (post-login) ===================== -->
+  <div class="flex flex-col items-center text-center mb-10 mt-2">
+    <div class="w-16 h-16 rounded-2xl bg-[#1E3A8A] flex items-center justify-center text-white font-extrabold text-2xl mb-3 shadow-sm">E</div>
+    <h1 class="text-xl font-extrabold text-[#0F172A]">Ecobyte — PWMU Intelligence Center</h1>
+    <p class="text-sm font-semibold text-slate-500 mt-2 tracking-wide">NIT RAIPUR | GOVERNMENT OF CHHATTISGARH | UNICEF</p>
+    <p class="text-xs text-slate-400 mt-1">
+      {% if user_profile %}Welcome, {{ user_profile.name }} · {{ user_profile.pwm_unit }} · {{ user_profile.district }}{% else %}PWMU / MRF Monitoring Platform{% endif %}
+    </p>
+  </div>
+
+  <h2 class="text-2xl font-extrabold text-[#0F172A] mb-6">HOME</h2>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+    <a href="{{ url_for('gate_security_page') }}" class="card bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center">
+      <img src="{{ url_for('static', filename='images/icons/icon_vehicle.png') }}" alt="Vehicle Entry/Exit Counter" class="w-20 h-20 object-contain mb-3 rounded-full">
+      <h3 class="text-base font-bold text-[#0F172A]">Vehicle Entry/Exit Counter</h3>
+      <span class="mt-3 text-[10px] font-bold px-2 py-1 rounded-full {{ 'bg-red-50 text-red-600 border border-red-200' if status.vehicle else 'bg-slate-100 text-slate-400 border border-slate-200' }}">
+        {{ '● LIVE' if status.vehicle else 'IDLE' }}
+      </span>
+    </a>
+
+    <a href="{{ url_for('gate_security_page') }}" class="card bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center">
+      <img src="{{ url_for('static', filename='images/icons/icon_plate.png') }}" alt="ANPR — Number Plate Records" class="w-28 h-20 object-contain mb-3">
+      <h3 class="text-base font-bold text-[#0F172A]">ANPR — Number Plate Records</h3>
+      <span class="mt-3 text-[10px] font-bold px-2 py-1 rounded-full {{ 'bg-red-50 text-red-600 border border-red-200' if status.plate else 'bg-slate-100 text-slate-400 border border-slate-200' }}">
+        {{ '● LIVE' if status.plate else 'IDLE' }}
+      </span>
+    </a>
+
+    <a href="{{ url_for('gate_security_page') }}" class="card bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center">
+      <img src="{{ url_for('static', filename='images/icons/icon_thief.png') }}" alt="PWMU Shed Security" class="w-20 h-20 object-contain mb-3 rounded-full">
+      <h3 class="text-base font-bold text-[#0F172A]">PWMU Shed Security</h3>
+      <span class="mt-3 text-[10px] font-bold px-2 py-1 rounded-full {{ 'bg-red-50 text-red-600 border border-red-200' if status.thief else 'bg-slate-100 text-slate-400 border border-slate-200' }}">
+        {{ '● LIVE' if status.thief else 'IDLE' }}
+      </span>
+    </a>
+
+    <a href="{{ url_for('gate_security_page') }}" class="card bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center">
+      <div class="w-20 h-20 flex items-center justify-center mb-3 rounded-full bg-orange-50 text-4xl">🚨</div>
+      <h3 class="text-base font-bold text-[#0F172A]">Smart Security (ESP32 IoT)</h3>
+      <span class="mt-3 text-[10px] font-bold px-2 py-1 rounded-full {{ 'bg-red-50 text-red-600 border border-red-200' if status.smart_security else 'bg-slate-100 text-slate-400 border border-slate-200' }}">
+        {{ '● LIVE' if status.smart_security else 'STANDBY' }}
+      </span>
+    </a>
+
+    <a href="{{ url_for('ai_segregation_page') }}" class="card bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center">
+      <img src="{{ url_for('static', filename='images/icons/icon_waste_primary.png') }}" alt="Primary Waste Segregation" class="w-20 h-20 object-contain mb-3 rounded-full">
+      <h3 class="text-base font-bold text-[#0F172A]">Primary Waste Segregation</h3>
+      <span class="mt-3 text-[10px] font-bold px-2 py-1 rounded-full {{ 'bg-red-50 text-red-600 border border-red-200' if status.waste_primary else 'bg-slate-100 text-slate-400 border border-slate-200' }}">
+        {{ '● LIVE' if status.waste_primary else 'IDLE' }}
+      </span>
+    </a>
+
+    <a href="{{ url_for('ai_segregation_page') }}" class="card bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center">
+      <img src="{{ url_for('static', filename='images/icons/icon_waste_secondary.png') }}" alt="Secondary Plastic Classification" class="w-28 h-20 object-contain mb-3">
+      <h3 class="text-base font-bold text-[#0F172A]">Secondary Plastic Classification</h3>
+      <span class="mt-3 text-[10px] font-bold px-2 py-1 rounded-full {{ 'bg-red-50 text-red-600 border border-red-200' if status.waste_secondary else 'bg-slate-100 text-slate-400 border border-slate-200' }}">
+        {{ '● LIVE' if status.waste_secondary else 'IDLE' }}
+      </span>
+    </a>
+
+    <a href="{{ url_for('dashboard_page') }}" class="card bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col items-center text-center">
+      <img src="{{ url_for('static', filename='images/icons/icon_analytics.png') }}" alt="Analytics & Audit Reports" class="w-20 h-20 object-contain mb-3 rounded-full">
+      <h3 class="text-base font-bold text-[#0F172A]">Analytics &amp; Audit Reports</h3>
+      <span class="mt-3 text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200">ONLINE</span>
+    </a>
+
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+</body>
+</html>

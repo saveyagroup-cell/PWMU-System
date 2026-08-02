@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}PWMU Control Room{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <h1>PWMU AI Control Room</h1>
+        <span>Team Ecobyte × Robosapiens — NIT Raipur</span>
+      </div>
+    </div>
+    <nav class="tabs">
+      <a href="{{ url_for('home_page') }}" class="{{ 'active' if request.path == '/' else '' }}">Overview</a>
+      <a href="{{ url_for('waste_page') }}" class="{{ 'active' if request.path == '/waste' else '' }}">Waste Segregation</a>
+      <a href="{{ url_for('vehicle_page') }}" class="{{ 'active' if request.path == '/vehicle' else '' }}">Vehicle Count</a>
+      <a href="{{ url_for('plate_page') }}" class="{{ 'active' if request.path == '/plate' else '' }}">Number Plate</a>
+      <a href="{{ url_for('thief_page') }}" class="{{ 'active' if request.path == '/thief' else '' }}">Thief Detection</a>
+    </nav>
+  </div>
+
+  <div class="container">
+    {% block content %}{% endblock %}
+    <div class="footer-note">PWMU Intelligence Layer · Built for municipal waste management, Raipur, Chhattisgarh</div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

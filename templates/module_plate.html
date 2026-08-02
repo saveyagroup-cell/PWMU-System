@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANPR — Ecobyte PWMU</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #F8FAFC; }
+  .video-box { aspect-ratio: 16/9; background:#0F172A; }
+  .video-box img { width:100%; height:100%; object-fit:contain; }
+</style>
+</head>
+<body class="text-slate-800">
+{% include "_header.html" %}
+
+<main class="max-w-[1300px] mx-auto px-6 py-6">
+  <a href="{{ url_for('home_page') }}" class="text-sm text-[#1E3A8A] font-semibold" data-i18n="common.back">← Back to Hub</a>
+
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-4">
+    <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-[#0F172A]">🪪 ANPR — Number Plate Records</h3>
+          <p class="text-xs text-slate-500">YOLOv8 detection + EasyOCR reading — dedicated camera</p>
+        </div>
+        <span id="live-badge" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+      </div>
+      <div class="video-box relative">
+        <img id="feed-img" class="hidden">
+        <div id="feed-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs px-4 text-center">Camera offline — click Start or upload footage</div>
+      </div>
+      <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+        <button id="toggle-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start Camera</button>
+        <label class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white cursor-pointer hover:border-slate-300">
+          Upload Footage <input id="upload-input" type="file" accept="video/*" class="hidden">
+        </label>
+        <a href="/api/download/video/plate" class="text-xs font-medium text-[#1E3A8A] border border-blue-200 rounded-md px-3 py-1.5 bg-blue-50 hover:bg-blue-100">⬇ Video</a>
+        <a href="/api/report_pdf/plate?period=all" class="text-xs font-medium text-white bg-[#1E3A8A] hover:bg-blue-900 rounded-md px-3 py-1.5">⬇ PDF Report</a>
+        <a href="/api/report/plate?period=all" class="text-xs font-medium text-slate-600 border border-slate-200 rounded-md px-3 py-1.5 bg-white hover:bg-slate-50">⬇ CSV</a>
+      </div>
+    </div>
+
+    <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <h3 class="text-sm font-bold text-slate-700 mb-2">Manual Entry Override</h3>
+      <div class="flex flex-col gap-2">
+        <input id="manual-plate" placeholder="Plate number (e.g. CG04AB1234)" class="text-sm border border-slate-200 rounded-md px-3 py-1.5">
+        <button id="manual-add-btn" class="bg-[#1E3A8A] hover:bg-blue-900 text-white text-xs font-semibold px-3 py-2 rounded-md">+ Add Entry</button>
+      </div>
+      <div class="mt-4 text-xs text-slate-500">
+        Green box = confirmed OCR read. Orange box = detected but unreadable (saved for manual verification).
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mt-5">
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="text-sm font-bold text-slate-700">Number Plate Log — Auto-saved to Supabase</h3>
+      <button id="search-toggle" class="text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50">Search Plate</button>
+    </div>
+    <input id="search-input" placeholder="Type a plate number to filter..." class="hidden text-sm border border-slate-200 rounded-md px-3 py-1.5 mb-3 w-full max-w-sm">
+    <div class="overflow-x-auto max-h-96 overflow-y-auto">
+      <table class="w-full" id="anpr-table">
+        <thead class="sticky top-0 bg-white">
+          <tr class="text-left text-[10px] uppercase tracking-wide text-slate-400 border-b border-slate-200">
+            <th class="py-2 px-3">Snapshot</th><th class="py-2 px-3">Plate</th><th class="py-2 px-3">Confidence</th><th class="py-2 px-3">Time</th><th class="py-2 px-3">Source</th>
+          </tr>
+        </thead>
+        <tbody id="anpr-body">
+          {% for p in recent %}
+          <tr class="border-b border-slate-100 last:border-0">
+            <td class="py-2 px-3">{% if p.url %}<img src="{{ p.url }}" class="w-14 h-9 object-cover rounded border border-slate-200">{% else %}—{% endif %}</td>
+            <td class="py-2 px-3 text-sm font-semibold text-slate-700">{{ p.plate }}</td>
+            <td class="py-2 px-3 text-sm text-slate-500">{{ p.conf }}</td>
+            <td class="py-2 px-3 text-sm text-slate-500">{{ p.time }}</td>
+            <td class="py-2 px-3 text-xs">{{ p.source or 'auto' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-center text-slate-400 py-6 text-sm">No plates detected yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script src="{{ url_for('static', filename='js/module_common.js') }}"></script>
+<script>
+  setupModulePanel("plate", {{ 'true' if active else 'false' }});
+
+  let __rows = [];
+  async function refreshTable() {
+    try {
+      const res = await fetch("/api/counts/plate");
+      const data = await res.json();
+      __rows = data.recent || [];
+      renderTable(document.getElementById("search-input").value.trim().toUpperCase());
+    } catch (e) {}
+  }
+  function renderTable(filter) {
+    const body = document.getElementById("anpr-body");
+    const rows = filter ? __rows.filter(p => (p.plate || "").toUpperCase().includes(filter)) : __rows;
+    if (!rows.length) {
+      body.innerHTML = `<tr><td colspan="5" class="text-center text-slate-400 py-6 text-sm">No matching plates</td></tr>`;
+      return;
+    }
+    body.innerHTML = rows.map(p => `
+      <tr class="border-b border-slate-100 last:border-0">
+        <td class="py-2 px-3">${p.url ? `<img src="${p.url}" class="w-14 h-9 object-cover rounded border border-slate-200">` : "—"}</td>
+        <td class="py-2 px-3 text-sm font-semibold text-slate-700">${p.plate}</td>
+        <td class="py-2 px-3 text-sm text-slate-500">${p.conf}</td>
+        <td class="py-2 px-3 text-sm text-slate-500">${p.time}</td>
+        <td class="py-2 px-3 text-xs">${p.source || "auto"}</td>
+      </tr>`).join("");
+  }
+
+  document.getElementById("search-toggle").addEventListener("click", () => {
+    document.getElementById("search-input").classList.toggle("hidden");
+  });
+  document.getElementById("search-input").addEventListener("input", (e) => {
+    renderTable(e.target.value.trim().toUpperCase());
+  });
+  document.getElementById("manual-add-btn").addEventListener("click", async () => {
+    const plate = document.getElementById("manual-plate").value.trim();
+    if (!plate) { alert("Plate number daalo pehle"); return; }
+    await fetch("/api/manual_entry", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plate, vehicle_type: "—", direction: "—" }),
+    });
+    document.getElementById("manual-plate").value = "";
+    refreshTable();
+  });
+
+  refreshTable();
+  setInterval(refreshTable, 3000);
+</script>
+</body>
+</html>

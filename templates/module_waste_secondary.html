@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secondary Plastic Classification — EchoByte PWMU</title>
+<meta name="description" content="Real-time 7-type plastic classification using AI for PWMU waste segregation. Powered by EchoByte & Robosapiens.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:        #07111E;
+    --surface:   #0D1F35;
+    --surface2:  #112744;
+    --border:    #1E3A5F;
+    --accent:    #00C853;
+    --accent2:   #00E676;
+    --orange:    #FF6D00;
+    --text:      #E8F0FE;
+    --text-muted:#8BAEC8;
+    --danger:    #FF4444;
+    --warn:      #FFB300;
+
+    --c-pet:     #3B82F6;
+    --c-hdpe:    #10B981;
+    --c-pvc:     #EF4444;
+    --c-ldpe:    #F59E0B;
+    --c-pp:      #8B5CF6;
+    --c-ps:      #EC4899;
+    --c-other:   #6B7280;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ---- Layout ---- */
+  .page-wrap  { max-width: 1380px; margin: 0 auto; padding: 0 20px 40px; }
+  .back-link  { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600;
+                color: var(--accent); text-decoration: none; padding: 8px 0 4px;
+                transition: opacity .2s; }
+  .back-link:hover { opacity: .75; }
+
+  /* ---- Section headings ---- */
+  .sec-title { font-size: 11px; font-weight: 700; letter-spacing: .12em;
+               text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+
+  /* ---- Card ---- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .card-sub   { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .card-body  { padding: 18px; }
+
+  /* ---- Live badge ---- */
+  .live-badge {
+    display: none; align-items: center; gap: 5px;
+    font-size: 10px; font-weight: 800; letter-spacing: .08em;
+    color: var(--danger); background: rgba(255,68,68,.12);
+    border: 1px solid rgba(255,68,68,.35);
+    border-radius: 20px; padding: 3px 10px;
+    animation: pulse-badge 1.8s ease-in-out infinite;
+  }
+  .live-badge.show { display: flex; }
+  .live-dot { width: 6px; height: 6px; background: var(--danger); border-radius: 50%; }
+  @keyframes pulse-badge { 0%,100%{opacity:1} 50%{opacity:.55} }
+
+  /* ---- Video panel ---- */
+  .video-wrap {
+    position: relative; aspect-ratio: 16/9;
+    background: #020810; overflow: hidden;
+  }
+  .video-wrap img { width:100%; height:100%; object-fit:contain; display:block; }
+  #overlay-canvas { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .feed-placeholder {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; color: var(--text-muted);
+  }
+  .feed-placeholder svg { opacity: .3; }
+  .feed-placeholder p { font-size: 12px; text-align: center; max-width: 220px; }
+
+  /* Camera controls */
+  .cam-controls {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 600;
+    padding: 7px 15px; border-radius: 8px; border: none;
+    cursor: pointer; transition: all .18s;
+    text-decoration: none; white-space: nowrap;
+  }
+  .btn-primary   { background: var(--accent);  color: #07111E; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-outline   { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-blue      { background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.3); color: #60A5FA; }
+  .btn-blue:hover { background: rgba(59,130,246,.25); }
+  .btn-danger    { background: transparent; border: 1px solid var(--border); color: #F87171; }
+  .btn-danger:hover { border-color: var(--danger); }
+
+  /* ---- Top grid (video + KPI sidebar) ---- */
+  .top-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  @media(max-width: 900px) { .top-grid { grid-template-columns: 1fr; } }
+
+  /* ---- KPI cards ---- */
+  .kpi-stack { display: flex; flex-direction: column; gap: 12px; }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .kpi-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .kpi-val  { font-size: 24px; font-weight: 800; line-height: 1; }
+  .kpi-lbl  { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+  /* ---- 7-Type RIC Grid ---- */
+  .ric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  @media(max-width: 700px) { .ric-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .ric-card {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 12px;
+    transition: border-color .25s, transform .2s, box-shadow .2s;
+    position: relative;
+    overflow: hidden;
+    cursor: default;
+  }
+  .ric-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--ric-color, #3B82F6);
+    border-radius: 12px 12px 0 0;
+  }
+  .ric-card:hover {
+    border-color: var(--ric-color, #3B82F6);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  }
+  .ric-card.active {
+    border-color: var(--ric-color, #3B82F6);
+    box-shadow: 0 0 0 1px var(--ric-color, #3B82F6), 0 8px 24px rgba(0,0,0,.3);
+  }
+  .ric-number {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    font-size: 13px; font-weight: 800;
+    background: var(--ric-color, #3B82F6);
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .ric-name  { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .ric-full  { font-size: 10px; color: var(--text-muted); margin-bottom: 8px; line-height: 1.3; }
+  .ric-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 600;
+    padding: 2px 7px; border-radius: 20px;
+    margin-bottom: 8px;
+  }
+  .badge-recycle   { background: rgba(16,185,129,.15); color: #34D399; border: 1px solid rgba(16,185,129,.3); }
+  .badge-no-recycle{ background: rgba(239,68,68,.12);  color: #F87171; border: 1px solid rgba(239,68,68,.25); }
+
+  .ric-count {
+    font-size: 28px; font-weight: 900;
+    color: var(--ric-color, #3B82F6);
+    line-height: 1;
+    transition: transform .25s;
+  }
+  .ric-count.bump { transform: scale(1.25); }
+  .ric-count-lbl { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ---- Revenue table ---- */
+  .rev-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .rev-table th {
+    text-align: left; font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text-muted);
+    padding: 6px 8px; border-bottom: 1px solid var(--border);
+  }
+  .rev-table td { padding: 8px 8px; border-bottom: 1px solid rgba(30,58,95,.5); vertical-align: middle; }
+  .rev-table tr:last-child td { border-bottom: none; }
+  .rev-table tr:hover td { background: rgba(255,255,255,.025); }
+  .color-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+  /* ---- Alert feed ---- */
+  .alert-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .alert-table th {
+    text-align: left; font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text-muted);
+    padding: 6px 8px; border-bottom: 1px solid var(--border);
+  }
+  .alert-table td { padding: 7px 8px; border-bottom: 1px solid rgba(30,58,95,.4); }
+  .alert-table tr:last-child td { border-bottom: none; }
+  .alert-table tr:hover td { background: rgba(255,255,255,.02); }
+
+  .status-pill {
+    font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+    display: inline-block;
+  }
+  .pill-verified  { background: rgba(0,200,83,.15);  color: #00E676; border: 1px solid rgba(0,200,83,.3); }
+  .pill-lowconf   { background: rgba(255,179,0,.12);  color: #FFB300; border: 1px solid rgba(255,179,0,.3); }
+
+  /* ---- Chart containers ---- */
+  .chart-wrap { position: relative; }
+
+  /* ---- Bottom 3-col grid ---- */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  @media(max-width: 1000px) { .bottom-grid { grid-template-columns: 1fr 1fr; } }
+  @media(max-width: 640px)  { .bottom-grid { grid-template-columns: 1fr; } }
+
+  /* ---- Recyclability summary bar ---- */
+  .recycle-bar-wrap { margin-top: 12px; }
+  .recycle-bar-track {
+    height: 12px; border-radius: 20px; overflow: hidden;
+    background: var(--surface2);
+    display: flex;
+  }
+  .recycle-seg { height: 100%; transition: width .5s ease; }
+
+  /* ---- Scrollable alert body ---- */
+  .alert-scroll { max-height: 240px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+  /* ---- Progress bar (plastic type breakdown) ---- */
+  .prog-track { height: 8px; background: var(--surface2); border-radius: 20px; overflow: hidden; }
+  .prog-fill  { height: 100%; border-radius: 20px; transition: width .45s ease; }
+
+  /* ---- Empty state ---- */
+  .empty-state { text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px 0; }
+
+  /* ---- Scan line animation on active video ---- */
+  .video-wrap.scanning::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: scan 2.5s linear infinite;
+  }
+  @keyframes scan { 0%{top:0} 100%{top:100%} }
+
+  /* ---- Glowing stats value on active ---- */
+  @keyframes count-glow { 0%,100%{text-shadow:none} 50%{text-shadow:0 0 12px currentColor} }
+  .glow-on-change { animation: count-glow .5s ease; }
+
+  /* ---- Mode chip ---- */
+  .mode-chip {
+    font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+    background: rgba(0,200,83,.12); color: var(--accent); border: 1px solid rgba(0,200,83,.25);
+  }
+</style>
+</head>
+<body>
+{% include "_header.html" %}
+
+<div class="page-wrap">
+  <a href="{{ url_for('home_page') }}" class="back-link">← Back to Hub</a>
+
+  <!-- ═══════════════════════════ TOP ROW ═══════════════════════════ -->
+  <div class="top-grid">
+
+    <!-- VIDEO PANEL -->
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">🧪 Secondary Plastic Classification</div>
+          <div class="card-sub">Conveyor 2 — final_7types.pt · 7 RIC Types · ByteTrack</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="mode-chip" id="track-mode-chip">BYTETRACK</span>
+          <div class="live-badge" id="live-badge"><div class="live-dot"></div>LIVE</div>
+        </div>
+      </div>
+
+      <div class="video-wrap" id="video-wrap">
+        <img id="feed-img" alt="Secondary Classification Live Feed" style="display:none;">
+        <canvas id="overlay-canvas" style="display:none;"></canvas>
+        <div class="feed-placeholder" id="feed-placeholder">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M4 6h8a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/>
+          </svg>
+          <p>Camera offline — click <strong>Start Camera</strong> or upload footage</p>
+        </div>
+      </div>
+
+      <div class="cam-controls">
+        <button id="toggle-btn" class="btn btn-primary" onclick="toggleCamera()">▶ Start Camera</button>
+        <label class="btn btn-outline" style="cursor:pointer;">
+          📁 Upload Footage <input id="upload-input" type="file" accept="video/*" style="display:none;" onchange="uploadVideo(this)">
+        </label>
+        <label class="btn btn-outline" style="cursor:pointer;">
+          🖼 Upload Photo <input id="photo-upload" type="file" accept="image/*" style="display:none;" onchange="handlePhoto(this)">
+        </label>
+        <a href="/api/download/video/waste_secondary" class="btn btn-blue">⬇ Video</a>
+        <a href="/api/report_pdf/waste_secondary?period=all" class="btn btn-blue">⬇ PDF</a>
+        <a href="/api/report/waste_secondary?period=all" class="btn btn-blue">⬇ CSV</a>
+        <button class="btn btn-danger" onclick="resetModule()">↺ Reset</button>
+      </div>
+    </div>
+
+    <!-- KPI SIDEBAR -->
+    <div class="kpi-stack">
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(0,200,83,.12);">♻</div>
+        <div>
+          <div class="kpi-val" id="kpi-total" style="color:var(--accent);">0</div>
+          <div class="kpi-lbl">Total Items Detected</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(59,130,246,.12);">🏷</div>
+        <div>
+          <div class="kpi-val" id="kpi-unique" style="color:#60A5FA;">0</div>
+          <div class="kpi-lbl">Unique Items (ByteTrack)</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(16,185,129,.12);">₹</div>
+        <div>
+          <div class="kpi-val" id="kpi-revenue" style="color:#34D399;">₹0</div>
+          <div class="kpi-lbl">Est. Recycling Revenue</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background:rgba(139,92,246,.12);">📈</div>
+        <div>
+          <div class="kpi-val" id="kpi-recyclable" style="color:#A78BFA;">0%</div>
+          <div class="kpi-lbl">Recyclable Fraction</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ 7 RIC TYPE GRID ═══════════════ -->
+  <div class="card" style="margin-top:16px;">
+    <div class="card-head">
+      <div>
+        <div class="card-title">♻ 7-Type Plastic Classification</div>
+        <div class="card-sub">RIC Resin Identification Codes — real-time detection per type</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <div style="font-size:10px;color:var(--text-muted);">Recyclable fraction</div>
+        <div class="recycle-bar-track" style="width:160px;">
+          <div class="recycle-seg" id="recycle-bar-yes" style="background:var(--accent);width:0%;"></div>
+          <div class="recycle-seg" id="recycle-bar-no"  style="background:var(--danger);width:0%;"></div>
+        </div>
+        <div id="recycle-summary" style="font-size:10px;color:var(--text-muted);">— waiting for data —</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="ric-grid" id="ric-grid">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ BOTTOM 3-COL GRID ═══════════════ -->
+  <div class="bottom-grid">
+
+    <!-- Donut chart -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">🥧 Composition</div>
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap" style="height:180px;">
+          <canvas id="pie-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline line chart -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">📈 Session Timeline</div>
+        <div class="card-sub">Detections per minute (last 10 min)</div>
+      </div>
+      <div class="card-body" style="padding:12px;">
+        <div class="chart-wrap" style="height:180px;">
+          <canvas id="timeline-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue breakdown -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">₹ Revenue Estimate</div>
+        <div class="card-sub">Based on detection counts × avg 25g/item</div>
+      </div>
+      <div class="card-body" style="padding:10px;">
+        <table class="rev-table" id="rev-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Cnt</th>
+              <th>kg</th>
+              <th>₹</th>
+            </tr>
+          </thead>
+          <tbody id="rev-body">
+            <tr><td colspan="4" class="empty-state">No data yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ALERT FEED ═══════════════ -->
+  <div class="card" style="margin-top:16px;">
+    <div class="card-head">
+      <div class="card-title">🔴 Real-Time Detection Feed</div>
+      <div class="card-sub">Last 20 detection events (newest first)</div>
+    </div>
+    <div class="card-body" style="padding:0;">
+      <div class="alert-scroll">
+        <table class="alert-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Type</th>
+              <th>Confidence</th>
+              <th>Track ID</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="alert-body">
+            <tr><td colspan="5" class="empty-state">No detections yet — start camera</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo analysis result -->
+  <div id="photo-results" class="card" style="margin-top:16px;display:none;">
+    <div class="card-head">
+      <div class="card-title">🖼 Photo Analysis Result</div>
+      <button onclick="document.getElementById('photo-results').style.display='none'"
+              style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;">×</button>
+    </div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <img id="photo-result-img" alt="Detection result"
+             style="border-radius:10px;border:1px solid var(--border);object-fit:contain;width:100%;max-height:260px;">
+        <div>
+          <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Detected plastic types:</p>
+          <div id="photo-labels" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script src="{{ url_for('static', filename='js/module_common.js') }}"></script>
+<script>
+// ──────────────────────────────────────────────────
+// Init module panel (raw-feed + canvas overlay)
+// ──────────────────────────────────────────────────
+setupModulePanel("waste_secondary", {{ 'true' if active else 'false' }}, true);
+
+// ──────────────────────────────────────────────────
+// RIC metadata (mirrors config.PLASTIC_RIC_INFO)
+// ──────────────────────────────────────────────────
+const RIC_TYPES = [
+  { key:"PET",   ric:1, full:"Polyethylene Terephthalate", recyclable:true,  color:"#3B82F6" },
+  { key:"HDPE",  ric:2, full:"High-Density Polyethylene",  recyclable:true,  color:"#10B981" },
+  { key:"PVC",   ric:3, full:"Polyvinyl Chloride",         recyclable:false, color:"#EF4444" },
+  { key:"LDPE",  ric:4, full:"Low-Density Polyethylene",   recyclable:true,  color:"#F59E0B" },
+  { key:"PP",    ric:5, full:"Polypropylene",               recyclable:true,  color:"#8B5CF6" },
+  { key:"PS",    ric:6, full:"Polystyrene",                 recyclable:false, color:"#EC4899" },
+  { key:"OTHER", ric:7, full:"Other / Mixed / Unclassified",recyclable:false, color:"#6B7280" },
+];
+
+// ──────────────────────────────────────────────────
+// Build RIC grid cards
+// ──────────────────────────────────────────────────
+function buildRicGrid() {
+  const grid = document.getElementById("ric-grid");
+  grid.innerHTML = RIC_TYPES.map(t => `
+    <div class="ric-card" id="ric-${t.key}" style="--ric-color:${t.color};">
+      <div class="ric-number">${t.ric}</div>
+      <div class="ric-name">${t.key}</div>
+      <div class="ric-full">${t.full}</div>
+      <div class="ric-badge ${t.recyclable ? 'badge-recycle' : 'badge-no-recycle'}">
+        ${t.recyclable ? '✅ Recyclable' : '❌ Non-recyclable'}
+      </div>
+      <div class="ric-count" id="count-${t.key}">0</div>
+      <div class="ric-count-lbl">items detected</div>
+    </div>
+  `).join("");
+}
+buildRicGrid();
+
+// ──────────────────────────────────────────────────
+// Charts
+// ──────────────────────────────────────────────────
+const PIE_COLORS = RIC_TYPES.map(t => t.color);
+
+const pieChart = new Chart(document.getElementById("pie-chart"), {
+  type: "doughnut",
+  data: {
+    labels: ["No data yet"],
+    datasets: [{ data: [1], backgroundColor: ["#1E3A5F"], borderWidth: 0 }],
+  },
+  options: {
+    plugins: {
+      legend: {
+        position: "bottom",
+        labels: { boxWidth: 10, font: { size: 10 }, color: "#8BAEC8", padding: 8 }
+      }
+    },
+    cutout: "65%",
+    animation: { duration: 500 },
+  },
+});
+
+const timelineChart = new Chart(document.getElementById("timeline-chart"), {
+  type: "line",
+  data: { labels: [], datasets: [] },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: "#8BAEC8", font: { size: 9 } }, grid: { color: "rgba(30,58,95,.5)" } },
+      y: { ticks: { color: "#8BAEC8", font: { size: 9 } }, grid: { color: "rgba(30,58,95,.5)" }, beginAtZero: true },
+    },
+    animation: { duration: 300 },
+    elements: { point: { radius: 2 }, line: { tension: 0.35 } },
+  },
+});
+
+// ──────────────────────────────────────────────────
+// Update RIC count card + animate
+// ──────────────────────────────────────────────────
+function updateRicCard(key, newCount) {
+  const el = document.getElementById(`count-${key}`);
+  const card = document.getElementById(`ric-${key}`);
+  if (!el) return;
+  const prev = parseInt(el.textContent) || 0;
+  el.textContent = newCount;
+  if (newCount > prev) {
+    el.classList.remove("bump");
+    void el.offsetWidth;
+    el.classList.add("bump");
+    setTimeout(() => el.classList.remove("bump"), 300);
+    card?.classList.add("active");
+  } else if (newCount === 0) {
+    card?.classList.remove("active");
+  }
+}
+
+// ──────────────────────────────────────────────────
+// Main data refresh (counts, revenue, alerts, timeline)
+// ──────────────────────────────────────────────────
+async function refreshAll() {
+  await Promise.all([refreshCounts(), refreshAlerts(), refreshTimeline()]);
+}
+
+async function refreshCounts() {
+  try {
+    const [countsRes, revRes, trackRes] = await Promise.all([
+      fetch("/api/counts/waste_secondary"),
+      fetch("/api/plastic_revenue"),
+      fetch("/api/track_stats/waste_secondary"),
+    ]);
+    const counts  = await countsRes.json();
+    const revData = await revRes.json();
+    const tracks  = await trackRes.json();
+
+    const entries = Object.entries(counts);
+
+    // Update RIC cards
+    RIC_TYPES.forEach(t => updateRicCard(t.key, counts[t.key] || 0));
+
+    // KPIs
+    const total = entries.reduce((s, [,v]) => s + v, 0);
+    const uniqueTotal = Object.values(tracks).reduce((s, v) => s + v, 0);
+    document.getElementById("kpi-total").textContent   = total.toLocaleString("en-IN");
+    document.getElementById("kpi-unique").textContent  = uniqueTotal.toLocaleString("en-IN");
+    document.getElementById("kpi-revenue").textContent =
+      `₹${(revData.total_est_revenue_inr || 0).toLocaleString("en-IN")}`;
+
+    // Recyclable fraction
+    const breakdown = revData.breakdown || {};
+    let recycleCnt = 0, nonRecycleCnt = 0;
+    for (const [key, data] of Object.entries(breakdown)) {
+      const ricInfo = RIC_TYPES.find(t => t.key === key.toUpperCase());
+      if (ricInfo?.recyclable) recycleCnt += data.count;
+      else nonRecycleCnt += data.count;
+    }
+    const rcTotal = recycleCnt + nonRecycleCnt;
+    const pct = rcTotal > 0 ? Math.round((recycleCnt / rcTotal) * 100) : 0;
+    document.getElementById("kpi-recyclable").textContent = `${pct}%`;
+    document.getElementById("recycle-bar-yes").style.width = `${pct}%`;
+    document.getElementById("recycle-bar-no").style.width  = `${100 - pct}%`;
+    document.getElementById("recycle-summary").textContent =
+      rcTotal > 0 ? `${recycleCnt} recyclable / ${nonRecycleCnt} non-recyclable of ${rcTotal} total` : "— waiting for data —";
+
+    // Donut chart
+    if (entries.length) {
+      const labels = entries.map(([k]) => k);
+      const data   = entries.map(([,v]) => v);
+      const colors = labels.map(l => {
+        const info = RIC_TYPES.find(t => t.key === l.toUpperCase());
+        return info ? info.color : "#888";
+      });
+      pieChart.data.labels = labels;
+      pieChart.data.datasets[0].data = data;
+      pieChart.data.datasets[0].backgroundColor = colors;
+      pieChart.update();
+    }
+
+    // Revenue table
+    const tbody = document.getElementById("rev-body");
+    if (Object.keys(breakdown).length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="empty-state">No data yet</td></tr>`;
+    } else {
+      tbody.innerHTML = Object.entries(breakdown).map(([label, d]) => {
+        const info = RIC_TYPES.find(t => t.key === label.toUpperCase());
+        const color = info ? info.color : "#888";
+        return `<tr>
+          <td style="display:flex;align-items:center;gap:6px;">
+            <span class="color-dot" style="background:${color};"></span>
+            <span style="font-weight:600;">${label}</span>
+          </td>
+          <td>${d.count}</td>
+          <td>${d.est_kg}</td>
+          <td style="color:#34D399;font-weight:700;">₹${d.est_revenue_inr}</td>
+        </tr>`;
+      }).join("") + `<tr style="border-top:1px solid var(--border);">
+        <td colspan="3" style="font-weight:700;text-align:right;padding-right:8px;">Total</td>
+        <td style="color:#00E676;font-weight:800;">₹${revData.total_est_revenue_inr}</td>
+      </tr>`;
+    }
+
+  } catch(_) {}
+}
+
+async function refreshAlerts() {
+  try {
+    const res  = await fetch("/api/recent_alerts/waste_secondary?limit=20");
+    const data = await res.json();
+    const alerts = data.alerts || [];
+    const tbody = document.getElementById("alert-body");
+
+    if (!alerts.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No detections yet — start camera</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = alerts.map(a => {
+      const info   = RIC_TYPES.find(t => t.key === (a.label || "").toUpperCase());
+      const color  = info ? info.color : "#888";
+      const isVerif= a.status === "Verified";
+      return `<tr>
+        <td style="color:var(--text-muted);">${a.time}</td>
+        <td>
+          <span style="display:inline-flex;align-items:center;gap:5px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block;"></span>
+            <strong>${a.label}</strong>
+          </span>
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <div style="width:50px;height:5px;background:var(--surface2);border-radius:20px;overflow:hidden;">
+              <div style="width:${Math.round(a.conf*100)}%;height:100%;background:${color};border-radius:20px;"></div>
+            </div>
+            <span style="font-size:10px;">${(a.conf*100).toFixed(0)}%</span>
+          </div>
+        </td>
+        <td style="color:var(--text-muted);">${a.track_id != null ? `#${a.track_id}` : "—"}</td>
+        <td>
+          <span class="status-pill ${isVerif ? 'pill-verified' : 'pill-lowconf'}">
+            ${isVerif ? "✓ Verified" : "⚠ Low Conf"}
+          </span>
+        </td>
+      </tr>`;
+    }).join("");
+  } catch(_) {}
+}
+
+async function refreshTimeline() {
+  try {
+    const res  = await fetch("/api/detection_timeline/waste_secondary?minutes=10");
+    const data = await res.json();
+    const minutes = data.minutes || [];
+    const series  = data.series  || {};
+    const labels  = data.labels  || [];
+
+    if (!minutes.length) return;
+
+    timelineChart.data.labels = minutes;
+    timelineChart.data.datasets = labels.map(lbl => {
+      const info = RIC_TYPES.find(t => t.key === lbl.toUpperCase());
+      const color = info ? info.color : "#888";
+      return {
+        label: lbl,
+        data: series[lbl] || [],
+        borderColor: color,
+        backgroundColor: color + "22",
+        fill: true,
+        pointBackgroundColor: color,
+      };
+    });
+    timelineChart.update();
+  } catch(_) {}
+}
+
+// ──────────────────────────────────────────────────
+// Camera controls
+// ──────────────────────────────────────────────────
+let isActive = {{ 'true' if active else 'false' }};
+
+async function toggleCamera() {
+  const btn = document.getElementById("toggle-btn");
+  btn.disabled = true;
+  try {
+    const res  = await fetch("/api/toggle/waste_secondary", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({}) });
+    const data = await res.json();
+    isActive = data.active;
+    updateCameraUI(isActive);
+  } catch(e) { alert("Error: " + e.message); }
+  btn.disabled = false;
+}
+
+async function uploadVideo(input) {
+  if (!input.files[0]) return;
+  const fd = new FormData();
+  fd.append("video", input.files[0]);
+  const btn = document.getElementById("toggle-btn");
+  btn.textContent = "⏳ Loading...";
+  try {
+    const res  = await fetch("/api/upload/waste_secondary", { method: "POST", body: fd });
+    const data = await res.json();
+    isActive = data.active;
+    updateCameraUI(isActive);
+  } catch(e) { alert("Error: " + e.message); }
+  input.value = "";
+}
+
+function updateCameraUI(active) {
+  const btn   = document.getElementById("toggle-btn");
+  const badge = document.getElementById("live-badge");
+  const wrap  = document.getElementById("video-wrap");
+  const ph    = document.getElementById("feed-placeholder");
+  const img   = document.getElementById("feed-img");
+  const canvas= document.getElementById("overlay-canvas");
+
+  if (active) {
+    btn.textContent = "■ Stop Camera";
+    btn.classList.replace("btn-primary", "btn-danger");
+    badge.classList.add("show");
+    wrap.classList.add("scanning");
+    ph.style.display    = "none";
+    img.style.display   = "block";
+    canvas.style.display= "block";
+  } else {
+    btn.textContent = "▶ Start Camera";
+    btn.classList.replace("btn-danger", "btn-primary");
+    badge.classList.remove("show");
+    wrap.classList.remove("scanning");
+    ph.style.display    = "flex";
+    img.style.display   = "none";
+    canvas.style.display= "none";
+  }
+}
+
+async function resetModule() {
+  if (!confirm("Reset all detection counts?")) return;
+  await fetch("/api/reset/waste_secondary", { method: "POST" });
+  RIC_TYPES.forEach(t => updateRicCard(t.key, 0));
+  document.getElementById("kpi-total").textContent    = "0";
+  document.getElementById("kpi-unique").textContent   = "0";
+  document.getElementById("kpi-revenue").textContent  = "₹0";
+  document.getElementById("kpi-recyclable").textContent = "0%";
+  document.getElementById("alert-body").innerHTML = `<tr><td colspan="5" class="empty-state">Reset — no detections yet</td></tr>`;
+  pieChart.data.labels = ["No data yet"];
+  pieChart.data.datasets[0].data = [1];
+  pieChart.data.datasets[0].backgroundColor = ["#1E3A5F"];
+  pieChart.update();
+  timelineChart.data.labels = [];
+  timelineChart.data.datasets = [];
+  timelineChart.update();
+  document.getElementById("rev-body").innerHTML = `<tr><td colspan="4" class="empty-state">No data yet</td></tr>`;
+}
+
+// ──────────────────────────────────────────────────
+// Photo upload inference
+// ──────────────────────────────────────────────────
+async function handlePhoto(input) {
+  if (!input.files[0]) return;
+  const fd = new FormData();
+  fd.append("image", input.files[0]);
+  try {
+    const res  = await fetch("/api/infer_image/waste_secondary", { method: "POST", body: fd });
+    if (!res.ok) throw new Error(await res.text());
+    const blob = await res.blob();
+    document.getElementById("photo-result-img").src = URL.createObjectURL(blob);
+    document.getElementById("photo-results").style.display = "block";
+
+    const boxRes  = await fetch("/api/live_boxes/waste_secondary");
+    const boxData = await boxRes.json();
+    const detected = [...new Set((boxData.boxes || []).map(b => b.label))];
+    const labelsEl = document.getElementById("photo-labels");
+    labelsEl.innerHTML = detected.length
+      ? detected.map(l => {
+          const info = RIC_TYPES.find(t => t.key === l.toUpperCase());
+          const color = info ? info.color : "#888";
+          return `<span style="padding:4px 10px;background:${color}22;border:1px solid ${color}55;border-radius:20px;font-size:11px;font-weight:700;color:${color};">${l}</span>`;
+        }).join("")
+      : `<span style="color:var(--text-muted);font-size:12px;">No plastic detected</span>`;
+  } catch(e) { alert("Photo error: " + e.message); }
+  input.value = "";
+}
+
+// ──────────────────────────────────────────────────
+// Init and polling
+// ──────────────────────────────────────────────────
+updateCameraUI({{ 'true' if active else 'false' }});
+refreshAll();
+setInterval(refreshAll, 2000);
+</script>
+</body>
+</html>

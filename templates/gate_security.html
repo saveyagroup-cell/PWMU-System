@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gate & Security — Ecobyte PWMU</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #F8FAFC; }
+  .video-box { aspect-ratio: 16/9; background:#0F172A; }
+  .video-box img { width:100%; height:100%; object-fit:contain; }
+  .flash-border { animation: flashBorder 1s infinite; }
+  @keyframes flashBorder { 0%,100% { border-color:#DC2626; } 50% { border-color:#FCA5A5; } }
+</style>
+</head>
+<body class="text-slate-800">
+{% include "_header.html" %}
+
+<main class="max-w-[1500px] mx-auto px-6 py-6">
+  <h2 class="text-xl font-extrabold text-[#0F172A] mb-5" data-i18n="nav.gate">Gate &amp; Security</h2>
+
+  <!-- ===================== VEHICLE COUNTER ===================== -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+    <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-sm font-bold text-[#0F172A]">🚗 Vehicle Entry/Exit Counter</h3>
+        <span id="live-badge-vehicle" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+      </div>
+      <div class="video-box relative">
+        <img id="feed-img-vehicle" class="hidden">
+        <div id="feed-placeholder-vehicle" class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs px-4 text-center">Camera offline — click Start or upload footage</div>
+      </div>
+      <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+        <button id="toggle-btn-vehicle" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start Camera</button>
+        <label class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white cursor-pointer hover:border-slate-300">
+          Upload <input id="upload-input-vehicle" type="file" accept="video/*" class="hidden">
+        </label>
+        <a href="/api/report_pdf/vehicle?period=all" class="text-xs font-medium text-white bg-[#1E3A8A] hover:bg-blue-900 rounded-md px-3 py-1.5">⬇ PDF</a>
+      </div>
+    </div>
+    <div class="lg:col-span-2 grid grid-cols-2 gap-3">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <p class="text-xs text-slate-500 font-medium">Vehicle IN</p>
+        <p id="kpi-in" class="text-3xl font-extrabold text-[#16A34A] mt-1">0</p>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <p class="text-xs text-slate-500 font-medium">Vehicle OUT</p>
+        <p id="kpi-out" class="text-3xl font-extrabold text-[#DC2626] mt-1">0</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ANPR ===================== -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-5">
+    <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-sm font-bold text-[#0F172A]">🪪 ANPR — Number Plate Records</h3>
+        <span id="live-badge-plate" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+      </div>
+      <div class="video-box relative">
+        <img id="feed-img-plate" class="hidden">
+        <div id="feed-placeholder-plate" class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs px-4 text-center">Camera offline — click Start or upload footage</div>
+      </div>
+      <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+        <button id="toggle-btn-plate" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start Camera</button>
+        <label class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white cursor-pointer hover:border-slate-300">
+          Upload <input id="upload-input-plate" type="file" accept="video/*" class="hidden">
+        </label>
+        <a href="/api/report_pdf/plate?period=all" class="text-xs font-medium text-white bg-[#1E3A8A] hover:bg-blue-900 rounded-md px-3 py-1.5">⬇ PDF</a>
+      </div>
+    </div>
+    <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <h4 class="text-sm font-bold text-slate-700 mb-2">Manual Entry Override</h4>
+      <div class="flex flex-col gap-2">
+        <input id="manual-plate" placeholder="Plate number" class="text-sm border border-slate-200 rounded-md px-3 py-1.5">
+        <button id="manual-add-btn" class="bg-[#1E3A8A] hover:bg-blue-900 text-white text-xs font-semibold px-3 py-2 rounded-md">+ Add Entry</button>
+      </div>
+      <input id="search-input" placeholder="Search plate..." class="text-sm border border-slate-200 rounded-md px-3 py-1.5 mt-3 w-full">
+    </div>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-8">
+    <div class="overflow-x-auto max-h-72 overflow-y-auto">
+      <table class="w-full">
+        <thead class="sticky top-0 bg-white">
+          <tr class="text-left text-[10px] uppercase tracking-wide text-slate-400 border-b border-slate-200">
+            <th class="py-2 px-3">Snapshot</th><th class="py-2 px-3">Plate</th><th class="py-2 px-3">Confidence</th><th class="py-2 px-3">Time</th>
+          </tr>
+        </thead>
+        <tbody id="anpr-body"><tr><td colspan="4" class="text-center text-slate-400 py-6 text-sm">No records available</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===================== SHED SECURITY ===================== -->
+  <div id="video-panel-thief" class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+    <div class="lg:col-span-3 bg-white rounded-xl border-2 border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-sm font-bold text-[#0F172A]">🛡️ PWMU Shed Security</h3>
+        <span id="live-badge-thief" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+      </div>
+      <div class="video-box relative">
+        <img id="feed-img-thief" class="hidden">
+        <div id="feed-placeholder-thief" class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs px-4 text-center">Camera offline — click Start to arm security</div>
+      </div>
+      <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+        <button id="toggle-btn-thief" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start Camera</button>
+        <a href="/api/report_pdf/thief?period=all" class="text-xs font-medium text-white bg-[#1E3A8A] hover:bg-blue-900 rounded-md px-3 py-1.5">⬇ PDF</a>
+        <label class="flex items-center gap-1.5 text-xs text-slate-500 ml-auto">
+          <input type="checkbox" id="alarm-toggle" checked> Audio alarm
+        </label>
+      </div>
+    </div>
+    <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <h4 class="text-sm font-bold text-slate-700 mb-2">Alert History</h4>
+      <div class="overflow-x-auto max-h-72 overflow-y-auto">
+        <table class="w-full">
+          <thead><tr class="text-left text-[10px] uppercase tracking-wide text-slate-400 border-b border-slate-200"><th class="py-2 px-3">Snapshot</th><th class="py-2 px-3">Reason</th><th class="py-2 px-3">Time</th></tr></thead>
+          <tbody id="alerts-body"><tr><td colspan="3" class="text-center text-slate-400 py-6 text-sm">No records available</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SMART SECURITY (ESP32 IoT) ===================== -->
+  <div class="flex items-center justify-between mt-10 mb-4">
+    <h3 class="text-lg font-extrabold text-[#0F172A] flex items-center gap-2">🚨 Smart Security — ESP32 IoT Sensors</h3>
+    <span id="ss-esp32-badge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 border border-slate-200">ESP32: checking…</span>
+  </div>
+
+  <div id="ss-panel" class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+    <div class="lg:col-span-3 bg-white rounded-xl border-2 border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-[#0F172A]">📷 Sensor-Triggered Camera</h3>
+          <p class="text-xs text-slate-500">PIR + IR motion · Flame · MQ-5 Gas — via ESP32 (USB serial)</p>
+        </div>
+        <span id="ss-live-badge" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+      </div>
+      <div class="video-box relative">
+        <img id="ss-feed-img" src="{{ url_for('video_feed_smart_security') }}" class="w-full h-full object-contain">
+      </div>
+      <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+        <button id="ss-camera-start" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start Camera</button>
+        <button id="ss-camera-stop" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Stop Camera</button>
+        <div class="flex items-center gap-1.5 ml-1 bg-white border border-slate-200 rounded-md p-1">
+          <button data-mode="DAY" class="ss-mode-btn text-xs font-semibold px-2.5 py-1 rounded">☀️ Day</button>
+          <button data-mode="NIGHT" class="ss-mode-btn text-xs font-semibold px-2.5 py-1 rounded">🌙 Night</button>
+          <button data-mode="AUTO" class="ss-mode-btn text-xs font-semibold px-2.5 py-1 rounded">⏱ Auto</button>
+        </div>
+        <button id="ss-buzzer-btn" class="text-xs font-semibold px-3 py-1.5 rounded-md ml-auto bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200">🔔 Buzzer OFF</button>
+      </div>
+    </div>
+
+    <div class="lg:col-span-2 flex flex-col gap-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div id="ss-card-pir" class="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
+          <p class="text-[10px] text-slate-500 font-semibold uppercase">PIR Motion</p>
+          <p id="ss-val-pir" class="text-lg font-extrabold text-slate-400 mt-1">— IDLE</p>
+        </div>
+        <div id="ss-card-ir" class="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
+          <p class="text-[10px] text-slate-500 font-semibold uppercase">IR Beam</p>
+          <p id="ss-val-ir" class="text-lg font-extrabold text-slate-400 mt-1">— IDLE</p>
+        </div>
+        <div id="ss-card-fire" class="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
+          <p class="text-[10px] text-slate-500 font-semibold uppercase">🔥 Flame</p>
+          <p id="ss-val-fire" class="text-lg font-extrabold text-slate-400 mt-1">— SAFE</p>
+        </div>
+        <div id="ss-card-gas" class="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
+          <p class="text-[10px] text-slate-500 font-semibold uppercase">⚠️ MQ-5 Gas</p>
+          <p id="ss-val-gas" class="text-lg font-extrabold text-slate-400 mt-1">— 0 ppm</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex-1">
+        <h4 class="text-sm font-bold text-slate-700 mb-2">Sensor Alert Log</h4>
+        <div class="overflow-x-auto max-h-52 overflow-y-auto">
+          <table class="w-full">
+            <thead><tr class="text-left text-[10px] uppercase tracking-wide text-slate-400 border-b border-slate-200"><th class="py-2 px-3">Snapshot</th><th class="py-2 px-3">Event</th><th class="py-2 px-3">Time</th></tr></thead>
+            <tbody id="ss-alerts-body"><tr><td colspan="3" class="text-center text-slate-400 py-6 text-sm">No records available</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script>
+function setupPanel(name) {
+  const feedImg = document.getElementById(`feed-img-${name}`);
+  const placeholder = document.getElementById(`feed-placeholder-${name}`);
+  const liveBadge = document.getElementById(`live-badge-${name}`);
+  const toggleBtn = document.getElementById(`toggle-btn-${name}`);
+  const uploadInput = document.getElementById(`upload-input-${name}`);
+
+  function setFeed(on) {
+    if (on) {
+      feedImg.src = `/video_feed/${name}?t=${Date.now()}`;
+      feedImg.classList.remove("hidden"); placeholder.classList.add("hidden"); liveBadge.classList.remove("hidden");
+      toggleBtn.textContent = "Stop Camera";
+      toggleBtn.classList.remove("bg-emerald-600","hover:bg-emerald-700"); toggleBtn.classList.add("bg-red-600","hover:bg-red-700");
+    } else {
+      feedImg.removeAttribute("src"); feedImg.classList.add("hidden"); placeholder.classList.remove("hidden"); liveBadge.classList.add("hidden");
+      toggleBtn.textContent = "Start Camera";
+      toggleBtn.classList.remove("bg-red-600","hover:bg-red-700"); toggleBtn.classList.add("bg-emerald-600","hover:bg-emerald-700");
+    }
+  }
+  toggleBtn.addEventListener("click", async () => {
+    const res = await fetch(`/api/toggle/${name}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    setFeed((await res.json()).active);
+  });
+  if (uploadInput) uploadInput.addEventListener("change", async () => {
+    if (!uploadInput.files.length) return;
+    const fd = new FormData(); fd.append("video", uploadInput.files[0]);
+    toggleBtn.disabled = true;
+    const res = await fetch(`/api/upload/${name}`, { method: "POST", body: fd });
+    toggleBtn.disabled = false;
+    setFeed((await res.json()).active);
+  });
+}
+["vehicle", "plate", "thief"].forEach(setupPanel);
+
+async function refreshVehicle() {
+  try {
+    const res = await fetch("/api/counts/vehicle");
+    const data = await res.json();
+    document.getElementById("kpi-in").textContent = data.in ?? 0;
+    document.getElementById("kpi-out").textContent = data.out ?? 0;
+  } catch (e) {}
+}
+
+let __anprRows = [];
+async function refreshAnpr() {
+  try {
+    const res = await fetch("/api/counts/plate");
+    const data = await res.json();
+    __anprRows = data.recent || [];
+    renderAnpr(document.getElementById("search-input").value.trim().toUpperCase());
+  } catch (e) {}
+}
+function renderAnpr(filter) {
+  const body = document.getElementById("anpr-body");
+  const rows = filter ? __anprRows.filter(p => (p.plate||"").toUpperCase().includes(filter)) : __anprRows;
+  if (!rows.length) { body.innerHTML = `<tr><td colspan="4" class="text-center text-slate-400 py-6 text-sm">No records available</td></tr>`; return; }
+  body.innerHTML = rows.map(p => `
+    <tr class="border-b border-slate-100 last:border-0">
+      <td class="py-2 px-3">${p.url ? `<img src="${p.url}" class="w-14 h-9 object-cover rounded border border-slate-200">` : "—"}</td>
+      <td class="py-2 px-3 text-sm font-semibold text-slate-700">${p.plate}</td>
+      <td class="py-2 px-3 text-sm text-slate-500">${p.conf}</td>
+      <td class="py-2 px-3 text-sm text-slate-500">${p.time}</td>
+    </tr>`).join("");
+}
+document.getElementById("search-input").addEventListener("input", e => renderAnpr(e.target.value.trim().toUpperCase()));
+document.getElementById("manual-add-btn").addEventListener("click", async () => {
+  const plate = document.getElementById("manual-plate").value.trim();
+  if (!plate) { alert("Plate number daalo pehle"); return; }
+  await fetch("/api/manual_entry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plate, vehicle_type: "—", direction: "—" }) });
+  document.getElementById("manual-plate").value = "";
+  refreshAnpr();
+});
+
+let __audioCtx = null;
+function playAlarmBeep() {
+  try {
+    __audioCtx = __audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = __audioCtx.createOscillator(); const g = __audioCtx.createGain();
+    o.type = "square"; o.frequency.value = 880; g.gain.setValueAtTime(0.15, __audioCtx.currentTime);
+    o.connect(g); g.connect(__audioCtx.destination); o.start();
+    o.frequency.setValueAtTime(660, __audioCtx.currentTime + 0.15);
+    o.stop(__audioCtx.currentTime + 0.35);
+  } catch (e) {}
+}
+let __lastAlertCount = undefined;
+async function refreshThief() {
+  try {
+    const res = await fetch("/api/counts/thief");
+    const data = await res.json();
+    const rows = data.recent || [];
+    if (__lastAlertCount !== undefined && rows.length > __lastAlertCount) {
+      if (document.getElementById("alarm-toggle").checked) playAlarmBeep();
+      document.getElementById("video-panel-thief").classList.add("flash-border");
+      setTimeout(() => document.getElementById("video-panel-thief").classList.remove("flash-border"), 4000);
+    }
+    __lastAlertCount = rows.length;
+    const body = document.getElementById("alerts-body");
+    if (!rows.length) { body.innerHTML = `<tr><td colspan="3" class="text-center text-slate-400 py-6 text-sm">No records available</td></tr>`; return; }
+    body.innerHTML = rows.map(a => `
+      <tr class="border-b border-slate-100 last:border-0">
+        <td class="py-2 px-3">${a.url ? `<img src="${a.url}" class="w-14 h-9 object-cover rounded border border-slate-200">` : "—"}</td>
+        <td class="py-2 px-3 text-sm"><span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 text-xs font-semibold">${a.reason}</span></td>
+        <td class="py-2 px-3 text-sm text-slate-500">${a.time}</td>
+      </tr>`).join("");
+  } catch (e) {}
+}
+
+refreshVehicle(); refreshAnpr(); refreshThief();
+setInterval(refreshVehicle, 1500);
+setInterval(refreshAnpr, 1500);
+setInterval(refreshThief, 2500);
+
+// ===================== SMART SECURITY (ESP32 IoT) =====================
+function ssSetCard(cardId, valId, active, onText, offText) {
+  const card = document.getElementById(cardId);
+  const val = document.getElementById(valId);
+  val.textContent = active ? `● ${onText}` : `— ${offText}`;
+  card.classList.remove("border-red-300", "border-slate-200");
+  val.classList.remove("text-red-600", "text-slate-400");
+  if (active) {
+    card.classList.add("border-red-300");
+    val.classList.add("text-red-600");
+  } else {
+    card.classList.add("border-slate-200");
+    val.classList.add("text-slate-400");
+  }
+}
+
+let __ssBuzzerState = false;
+function ssSetModeButtons(mode) {
+  document.querySelectorAll(".ss-mode-btn").forEach(btn => {
+    if (btn.dataset.mode === mode) {
+      btn.classList.add("bg-[#1E3A8A]", "text-white");
+      btn.classList.remove("text-slate-500");
+    } else {
+      btn.classList.remove("bg-[#1E3A8A]", "text-white");
+      btn.classList.add("text-slate-500");
+    }
+  });
+}
+
+let __ssLastAlertCount = undefined;
+async function refreshSmartSecurity() {
+  try {
+    const res = await fetch("/api/smart_security/status");
+    const data = await res.json();
+
+    // ESP32 connection badge
+    const badge = document.getElementById("ss-esp32-badge");
+    const state = data.esp32.state;
+    badge.className = "text-[10px] font-bold px-2.5 py-1 rounded-full border";
+    if (state === "connected") {
+      badge.textContent = `ESP32: Connected (${data.esp32.port})`;
+      badge.classList.add("bg-emerald-50", "text-emerald-700", "border-emerald-200");
+    } else if (state === "connecting") {
+      badge.textContent = `ESP32: Connecting… (${data.esp32.port})`;
+      badge.classList.add("bg-amber-50", "text-amber-700", "border-amber-200");
+    } else {
+      badge.textContent = `ESP32: Not Connected (${data.esp32.port})`;
+      badge.classList.add("bg-slate-100", "text-slate-400", "border-slate-200");
+    }
+
+    // Sensor cards
+    ssSetCard("ss-card-pir", "ss-val-pir", data.sensors.pir, "MOTION", "IDLE");
+    ssSetCard("ss-card-ir", "ss-val-ir", data.sensors.ir, "TRIGGERED", "IDLE");
+    ssSetCard("ss-card-fire", "ss-val-fire", data.sensors.fire, "FIRE!", "SAFE");
+    document.getElementById("ss-val-gas").textContent = `${data.sensors.gas ? "●" : "—"} ${data.sensors.gas_value} ppm`;
+    document.getElementById("ss-val-gas").classList.toggle("text-red-600", data.sensors.gas);
+    document.getElementById("ss-val-gas").classList.toggle("text-slate-400", !data.sensors.gas);
+    document.getElementById("ss-card-gas").classList.toggle("border-red-300", data.sensors.gas);
+    document.getElementById("ss-card-gas").classList.toggle("border-slate-200", !data.sensors.gas);
+
+    // Live badge (camera running)
+    document.getElementById("ss-live-badge").classList.toggle("hidden", !data.camera.running);
+
+    // Mode buttons
+    ssSetModeButtons(data.mode);
+
+    // Buzzer button
+    __ssBuzzerState = data.buzzer;
+    const buzzerBtn = document.getElementById("ss-buzzer-btn");
+    buzzerBtn.textContent = __ssBuzzerState ? "🔔 Buzzer ON" : "🔕 Buzzer OFF";
+    buzzerBtn.classList.toggle("bg-red-600", __ssBuzzerState);
+    buzzerBtn.classList.toggle("text-white", __ssBuzzerState);
+    buzzerBtn.classList.toggle("bg-slate-100", !__ssBuzzerState);
+    buzzerBtn.classList.toggle("text-slate-600", !__ssBuzzerState);
+
+    // Alert log
+    const rows = data.recent || [];
+    if (__ssLastAlertCount !== undefined && rows.length > __ssLastAlertCount) {
+      document.getElementById("ss-panel").classList.add("flash-border");
+      setTimeout(() => document.getElementById("ss-panel").classList.remove("flash-border"), 4000);
+    }
+    __ssLastAlertCount = rows.length;
+
+    const body = document.getElementById("ss-alerts-body");
+    if (!rows.length) {
+      body.innerHTML = `<tr><td colspan="3" class="text-center text-slate-400 py-6 text-sm">No records available</td></tr>`;
+    } else {
+      body.innerHTML = rows.map(a => `
+        <tr class="border-b border-slate-100 last:border-0">
+          <td class="py-2 px-3">${a.url ? `<img src="${a.url}" class="w-14 h-9 object-cover rounded border border-slate-200">` : "—"}</td>
+          <td class="py-2 px-3 text-sm"><span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 text-xs font-semibold">${a.reason}</span></td>
+          <td class="py-2 px-3 text-sm text-slate-500">${a.time}</td>
+        </tr>`).join("");
+    }
+  } catch (e) {}
+}
+
+document.querySelectorAll(".ss-mode-btn").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    await fetch("/api/smart_security/set_mode", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: btn.dataset.mode })
+    });
+    refreshSmartSecurity();
+  });
+});
+
+document.getElementById("ss-camera-start").addEventListener("click", async () => {
+  await fetch("/api/smart_security/camera/start", { method: "POST" });
+  refreshSmartSecurity();
+});
+document.getElementById("ss-camera-stop").addEventListener("click", async () => {
+  await fetch("/api/smart_security/camera/stop", { method: "POST" });
+  refreshSmartSecurity();
+});
+document.getElementById("ss-buzzer-btn").addEventListener("click", async () => {
+  await fetch(`/api/smart_security/buzzer/${__ssBuzzerState ? "off" : "on"}`, { method: "POST" });
+  refreshSmartSecurity();
+});
+
+refreshSmartSecurity();
+setInterval(refreshSmartSecurity, 1500);
+</script>
+</body>
+</html>

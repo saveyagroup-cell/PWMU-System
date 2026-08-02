@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Security (ESP32 IoT) — Ecobyte PWMU</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #F8FAFC; }
+  .video-box { aspect-ratio: 16/9; background:#0F172A; }
+  .video-box img { width:100%; height:100%; object-fit:contain; }
+  .flash-border { animation: flashBorder 1s infinite; }
+  @keyframes flashBorder { 0%,100% { border-color:#DC2626; } 50% { border-color:#FCA5A5; } }
+</style>
+</head>
+<body class="text-slate-800">
+{% include "_header.html" %}
+
+<main class="max-w-[1300px] mx-auto px-6 py-6">
+  <a href="{{ url_for('home_page') }}" class="text-sm text-[#1E3A8A] font-semibold" data-i18n="common.back">← Back to Hub</a>
+
+  <div class="flex items-center justify-between mt-4 mb-1">
+    <h2 class="text-xl font-extrabold text-[#0F172A]">🚨 Smart Security — ESP32 IoT Sensors</h2>
+    <span id="ss-esp32-badge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 border border-slate-200">ESP32: checking…</span>
+  </div>
+  <p class="text-xs text-slate-500 mb-4">PIR + IR motion, flame, and MQ-5 gas sensors over ESP32 (USB serial) — camera wakes automatically on trigger, Telegram alerts on fire/gas/intrusion.</p>
+
+  <div id="ss-panel" class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+    <div class="lg:col-span-3 bg-white rounded-xl border-2 border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-[#0F172A]">📷 Sensor-Triggered Camera</h3>
+          <p class="text-xs text-slate-500">DAY = always on · NIGHT/AUTO = wakes on sensor trigger</p>
+        </div>
+        <span id="ss-live-badge" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+      </div>
+      <div class="video-box relative">
+        <img id="ss-feed-img" src="{{ url_for('video_feed_smart_security') }}" class="w-full h-full object-contain">
+      </div>
+      <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+        <button id="ss-camera-start" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start Camera</button>
+        <button id="ss-camera-stop" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Stop Camera</button>
+        <div class="flex items-center gap-1.5 ml-1 bg-white border border-slate-200 rounded-md p-1">
+          <button data-mode="DAY" class="ss-mode-btn text-xs font-semibold px-2.5 py-1 rounded">☀️ Day</button>
+          <button data-mode="NIGHT" class="ss-mode-btn text-xs font-semibold px-2.5 py-1 rounded">🌙 Night</button>
+          <button data-mode="AUTO" class="ss-mode-btn text-xs font-semibold px-2.5 py-1 rounded">⏱ Auto</button>
+        </div>
+        <button id="ss-buzzer-btn" class="text-xs font-semibold px-3 py-1.5 rounded-md ml-auto bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200">🔕 Buzzer OFF</button>
+      </div>
+    </div>
+
+    <div class="lg:col-span-2 flex flex-col gap-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div id="ss-card-pir" class="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
+          <p class="text-[10px] text-slate-500 font-semibold uppercase">PIR Motion</p>
+          <p id="ss-val-pir" class="text-lg font-extrabold text-slate-400 mt-1">— IDLE</p>
+        </div>
+        <div id="ss-card-ir" class="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
+          <p class="text-[10px] text-slate-500 font-semibold uppercase">IR Beam</p>
+          <p id="ss-val-ir" class="text-lg font-extrabold text-slate-400 mt-1">— IDLE</p>
+        </div>
+        <div id="ss-card-fire" class="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
+          <p class="text-[10px] text-slate-500 font-semibold uppercase">🔥 Flame</p>
+          <p id="ss-val-fire" class="text-lg font-extrabold text-slate-400 mt-1">— SAFE</p>
+        </div>
+        <div id="ss-card-gas" class="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
+          <p class="text-[10px] text-slate-500 font-semibold uppercase">⚠️ MQ-5 Gas</p>
+          <p id="ss-val-gas" class="text-lg font-extrabold text-slate-400 mt-1">— 0 ppm</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex-1">
+        <h4 class="text-sm font-bold text-slate-700 mb-2">Sensor Alert Log</h4>
+        <div class="overflow-x-auto max-h-96 overflow-y-auto">
+          <table class="w-full">
+            <thead class="sticky top-0 bg-white"><tr class="text-left text-[10px] uppercase tracking-wide text-slate-400 border-b border-slate-200"><th class="py-2 px-3">Snapshot</th><th class="py-2 px-3">Event</th><th class="py-2 px-3">Time</th></tr></thead>
+            <tbody id="ss-alerts-body">
+              {% for a in status.recent %}
+              <tr class="border-b border-slate-100 last:border-0">
+                <td class="py-2 px-3">{% if a.url %}<img src="{{ a.url }}" class="w-14 h-9 object-cover rounded border border-slate-200">{% else %}—{% endif %}</td>
+                <td class="py-2 px-3 text-sm"><span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 text-xs font-semibold">{{ a.reason }}</span></td>
+                <td class="py-2 px-3 text-sm text-slate-500">{{ a.time }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="3" class="text-center text-slate-400 py-6 text-sm">No alerts yet</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script>
+function ssSetCard(cardId, valId, active, onText, offText) {
+  const card = document.getElementById(cardId);
+  const val = document.getElementById(valId);
+  val.textContent = active ? `● ${onText}` : `— ${offText}`;
+  card.classList.remove("border-red-300", "border-slate-200");
+  val.classList.remove("text-red-600", "text-slate-400");
+  if (active) { card.classList.add("border-red-300"); val.classList.add("text-red-600"); }
+  else { card.classList.add("border-slate-200"); val.classList.add("text-slate-400"); }
+}
+
+let __ssBuzzerState = false;
+function ssSetModeButtons(mode) {
+  document.querySelectorAll(".ss-mode-btn").forEach(btn => {
+    if (btn.dataset.mode === mode) { btn.classList.add("bg-[#1E3A8A]", "text-white"); btn.classList.remove("text-slate-500"); }
+    else { btn.classList.remove("bg-[#1E3A8A]", "text-white"); btn.classList.add("text-slate-500"); }
+  });
+}
+
+let __ssLastAlertCount = undefined;
+async function refreshSmartSecurity() {
+  try {
+    const res = await fetch("/api/smart_security/status");
+    const data = await res.json();
+
+    const badge = document.getElementById("ss-esp32-badge");
+    const state = data.esp32.state;
+    badge.className = "text-[10px] font-bold px-2.5 py-1 rounded-full border";
+    if (state === "connected") { badge.textContent = `ESP32: Connected (${data.esp32.port})`; badge.classList.add("bg-emerald-50","text-emerald-700","border-emerald-200"); }
+    else if (state === "connecting") { badge.textContent = `ESP32: Connecting… (${data.esp32.port})`; badge.classList.add("bg-amber-50","text-amber-700","border-amber-200"); }
+    else { badge.textContent = `ESP32: Not Connected (${data.esp32.port})`; badge.classList.add("bg-slate-100","text-slate-400","border-slate-200"); }
+
+    ssSetCard("ss-card-pir", "ss-val-pir", data.sensors.pir, "MOTION", "IDLE");
+    ssSetCard("ss-card-ir", "ss-val-ir", data.sensors.ir, "TRIGGERED", "IDLE");
+    ssSetCard("ss-card-fire", "ss-val-fire", data.sensors.fire, "FIRE!", "SAFE");
+    document.getElementById("ss-val-gas").textContent = `${data.sensors.gas ? "●" : "—"} ${data.sensors.gas_value} ppm`;
+    document.getElementById("ss-val-gas").classList.toggle("text-red-600", data.sensors.gas);
+    document.getElementById("ss-val-gas").classList.toggle("text-slate-400", !data.sensors.gas);
+    document.getElementById("ss-card-gas").classList.toggle("border-red-300", data.sensors.gas);
+    document.getElementById("ss-card-gas").classList.toggle("border-slate-200", !data.sensors.gas);
+
+    document.getElementById("ss-live-badge").classList.toggle("hidden", !data.camera.running);
+    ssSetModeButtons(data.mode);
+
+    __ssBuzzerState = data.buzzer;
+    const buzzerBtn = document.getElementById("ss-buzzer-btn");
+    buzzerBtn.textContent = __ssBuzzerState ? "🔔 Buzzer ON" : "🔕 Buzzer OFF";
+    buzzerBtn.classList.toggle("bg-red-600", __ssBuzzerState);
+    buzzerBtn.classList.toggle("text-white", __ssBuzzerState);
+    buzzerBtn.classList.toggle("bg-slate-100", !__ssBuzzerState);
+    buzzerBtn.classList.toggle("text-slate-600", !__ssBuzzerState);
+
+    const rows = data.recent || [];
+    if (__ssLastAlertCount !== undefined && rows.length > __ssLastAlertCount) {
+      document.getElementById("ss-panel").classList.add("flash-border");
+      setTimeout(() => document.getElementById("ss-panel").classList.remove("flash-border"), 4000);
+    }
+    __ssLastAlertCount = rows.length;
+
+    const body = document.getElementById("ss-alerts-body");
+    if (rows.length) {
+      body.innerHTML = rows.map(a => `
+        <tr class="border-b border-slate-100 last:border-0">
+          <td class="py-2 px-3">${a.url ? `<img src="${a.url}" class="w-14 h-9 object-cover rounded border border-slate-200">` : "—"}</td>
+          <td class="py-2 px-3 text-sm"><span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 text-xs font-semibold">${a.reason}</span></td>
+          <td class="py-2 px-3 text-sm text-slate-500">${a.time}</td>
+        </tr>`).join("");
+    }
+  } catch (e) {}
+}
+
+document.querySelectorAll(".ss-mode-btn").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    await fetch("/api/smart_security/set_mode", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: btn.dataset.mode }) });
+    refreshSmartSecurity();
+  });
+});
+document.getElementById("ss-camera-start").addEventListener("click", async () => { await fetch("/api/smart_security/camera/start", { method: "POST" }); refreshSmartSecurity(); });
+document.getElementById("ss-camera-stop").addEventListener("click", async () => { await fetch("/api/smart_security/camera/stop", { method: "POST" }); refreshSmartSecurity(); });
+document.getElementById("ss-buzzer-btn").addEventListener("click", async () => {
+  await fetch(`/api/smart_security/buzzer/${__ssBuzzerState ? "off" : "on"}`, { method: "POST" });
+  refreshSmartSecurity();
+});
+
+refreshSmartSecurity();
+setInterval(refreshSmartSecurity, 1500);
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Vehicle Count — PWMU{% endblock %}
+{% block content %}
+<div class="grid">
+  <div class="panel">
+    <h2>Live Detection <span class="muted">IN/OUT line-crossing counter</span></h2>
+    <div class="video-wrap">
+      <img id="feed-img" style="display:none;">
+      <div id="feed-placeholder" class="video-placeholder">Camera is off. Click "Start Camera" or upload a video below.</div>
+      <div id="live-badge" class="live-badge"><span class="r"></span>LIVE</div>
+    </div>
+    <div class="controls">
+      <button id="toggle-btn" class="btn btn-primary">Start Camera</button>
+      <button id="reset-btn" class="btn btn-outline">Reset Counts</button>
+      <form id="upload-form" style="display:flex; gap:8px; align-items:center;">
+        <input id="upload-input" type="file" name="video" accept="video/*">
+        <button type="submit" class="btn btn-outline">Process Video</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Gate Traffic</h2>
+    <div class="stats-row">
+      <div class="stat-card"><div id="in-val" class="val in">{{ counts.in }}</div><div class="lbl">Total IN</div></div>
+      <div class="stat-card"><div id="out-val" class="val out">{{ counts.out }}</div><div class="lbl">Total OUT</div></div>
+    </div>
+    <p style="color:var(--muted); font-size:13px; line-height:1.6;">
+      Vehicle classes tracked: car, motorbike, bus, truck. Every crossing is logged to
+      <code>captures/vehicle_log.csv</code> with timestamp and track ID.
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+initModule("vehicle", {
+  initialActive: {{ 'true' if active else 'false' }},
+  onCounts: (data) => {
+    document.getElementById("in-val").textContent = data.in ?? 0;
+    document.getElementById("out-val").textContent = data.out ?? 0;
+  }
+});
+</script>
+{% endblock %}

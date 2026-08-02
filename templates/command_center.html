@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ecobyte — Smart PWMU/MRF Intelligence System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #F8FAFC; }
+  .video-box { aspect-ratio: 16/9; background:#0F172A; }
+  .video-box img { width:100%; height:100%; object-fit:contain; }
+  .tab-btn.active { background:#1E3A8A; color:#fff; }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+  .progress-track { background:#E2E8F0; border-radius:999px; height:10px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:999px; transition: width .4s ease; }
+</style>
+</head>
+<body class="text-slate-800">
+
+<!-- ===================== TOP BAR ===================== -->
+<header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+  <div class="max-w-[1500px] mx-auto px-6 py-3 flex items-center justify-between flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-[#1E3A8A] flex items-center justify-center text-white font-bold text-lg">E</div>
+      <div>
+        <h1 class="text-base font-bold text-[#0F172A] leading-tight">Ecobyte — Smart PWMU / MRF Intelligence System</h1>
+        <div class="flex items-center gap-2 mt-0.5">
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200">Digital India Initiative</span>
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Swachh Bharat Mission</span>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-xs font-semibold text-emerald-700">System Online</span>
+      </div>
+      <div id="live-clock" class="text-xs font-medium text-slate-500 tabular-nums">—</div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB NAV ===================== -->
+  <nav class="max-w-[1500px] mx-auto px-6 pb-3 flex gap-2 flex-wrap">
+    <button class="tab-btn active px-4 py-2 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600" data-tab="gate">🟢 Gate &amp; Vehicle</button>
+    <button class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600" data-tab="stage1">🔵 Primary Segregation</button>
+    <button class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600" data-tab="stage2">🟡 Secondary Plastic</button>
+    <button class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600" data-tab="shed">🔴 PWMU Shed Security</button>
+    <button class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600" data-tab="summary">📊 Overall Summary</button>
+  </nav>
+</header>
+
+<main class="max-w-[1500px] mx-auto px-6 py-6">
+
+  <!-- NEW DASHBOARD BANNER -->
+  <div class="bg-gradient-to-r from-[#07111E] to-[#1E3A8A] rounded-xl p-5 mb-6 flex items-center justify-between text-white shadow-md">
+    <div>
+      <h2 class="text-lg font-bold flex items-center gap-2"><span>🚀</span> EchoByte Control Room Dashboard (New)</h2>
+      <p class="text-sm text-blue-100 opacity-90 mt-1">View the complete slide-matching dashboard with Machine Utilization, Balance Scale, and Cluster Projections.</p>
+    </div>
+    <a href="/dashboard" class="bg-[#00C853] hover:bg-green-500 text-slate-900 font-bold px-6 py-2.5 rounded-lg shadow transition">Launch Dashboard</a>
+  </div>
+
+  <!-- =========================================================== -->
+  <!-- SECTION 1: GATE & VEHICLE LOGISTICS                          -->
+  <!-- =========================================================== -->
+  <section id="tab-gate" class="tab-panel active">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-[#0F172A]">Gate 1 — Live Feed</h3>
+            <p class="text-xs text-slate-500">ANPR &amp; Vehicle IN/OUT Counter</p>
+          </div>
+          <span id="badge-gate" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+        </div>
+        <div class="video-box relative">
+          <img id="feed-gate" class="hidden">
+          <div id="placeholder-gate" class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs px-4 text-center">Camera offline — click Start or upload footage</div>
+        </div>
+        <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+          <button id="toggle-gate" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start</button>
+          <label class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white cursor-pointer hover:border-slate-300">
+            Upload Footage <input id="upload-gate" type="file" accept="video/*" class="hidden">
+          </label>
+          <a id="dl-video-gate" href="/api/download/video/gate" class="text-xs font-medium text-[#1E3A8A] border border-blue-200 rounded-md px-3 py-1.5 bg-blue-50 hover:bg-blue-100">⬇ Download Annotated Video</a>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2 flex flex-col gap-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <p class="text-xs text-slate-500 font-medium">Vehicle IN</p>
+            <p id="kpi-vehicle-in-tab" class="text-2xl font-extrabold text-[#16A34A] mt-1">0</p>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <p class="text-xs text-slate-500 font-medium">Vehicle OUT</p>
+            <p id="kpi-vehicle-out-tab" class="text-2xl font-extrabold text-[#DC2626] mt-1">0</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <h3 class="text-sm font-bold text-slate-700 mb-2">Manual Entry Override</h3>
+          <div class="flex flex-col gap-2">
+            <input id="manual-plate" placeholder="Plate number (e.g. CG04AB1234)" class="text-sm border border-slate-200 rounded-md px-3 py-1.5">
+            <div class="grid grid-cols-2 gap-2">
+              <select id="manual-vtype" class="text-sm border border-slate-200 rounded-md px-2 py-1.5">
+                <option>Truck</option><option>Van</option><option>Car</option><option>Bus</option><option>Motorbike</option>
+              </select>
+              <select id="manual-direction" class="text-sm border border-slate-200 rounded-md px-2 py-1.5">
+                <option>IN</option><option>OUT</option>
+              </select>
+            </div>
+            <button id="manual-add-btn" class="bg-[#1E3A8A] hover:bg-blue-900 text-white text-xs font-semibold px-3 py-2 rounded-md">+ Add Entry</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mt-5">
+      <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+        <h3 class="text-sm font-bold text-slate-700">Number Plate Capture &amp; Database Log</h3>
+        <div class="flex gap-2">
+          <button id="export-anpr-csv" class="text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50">Export Visible ⬇ CSV</button>
+          <button id="dl-log-gate" class="text-xs font-semibold px-3 py-1.5 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200">Full Log ⬇ CSV</button>
+          <button id="dl-pdf-gate" class="text-xs font-semibold px-3 py-1.5 rounded-md bg-[#1E3A8A] text-white hover:bg-blue-900">⬇ PDF Report</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto max-h-80 overflow-y-auto">
+        <table class="w-full" id="anpr-table">
+          <thead class="sticky top-0 bg-white">
+            <tr class="text-left text-[10px] uppercase tracking-wide text-slate-400 border-b border-slate-200">
+              <th class="py-2 px-3">Snapshot</th><th class="py-2 px-3">Plate</th><th class="py-2 px-3">Vehicle Type</th>
+              <th class="py-2 px-3">Direction</th><th class="py-2 px-3">Time</th><th class="py-2 px-3">Source</th>
+            </tr>
+          </thead>
+          <tbody id="anpr-body"><tr><td colspan="6" class="text-center text-slate-400 py-6 text-sm">No plates detected yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================== -->
+  <!-- SECTION 2: PRIMARY SEGREGATION (STAGE 1)                     -->
+  <!-- =========================================================== -->
+  <section id="tab-stage1" class="tab-panel">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-[#0F172A]">Conveyor 1 — Live Feed</h3>
+            <p class="text-xs text-slate-500">Primary Segregation — Metal vs Other Waste</p>
+          </div>
+          <span id="badge-waste_primary" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+        </div>
+        <div class="video-box relative">
+          <img id="feed-waste_primary" class="hidden">
+          <div id="placeholder-waste_primary" class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs px-4 text-center">Camera offline — click Start or upload footage</div>
+        </div>
+        <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+          <button id="toggle-waste_primary" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start</button>
+          <label class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white cursor-pointer hover:border-slate-300">
+            Upload Footage <input id="upload-waste_primary" type="file" accept="video/*" class="hidden">
+          </label>
+          <a id="dl-video-waste_primary" href="/api/download/video/waste_primary" class="text-xs font-medium text-[#1E3A8A] border border-blue-200 rounded-md px-3 py-1.5 bg-blue-50 hover:bg-blue-100">⬇ Download Annotated Video</a>
+          <button id="dl-log-waste_primary" class="text-xs font-medium text-slate-600 border border-slate-200 rounded-md px-3 py-1.5 bg-white hover:bg-slate-50">⬇ CSV Log</button>
+          <button id="dl-pdf-waste_primary" class="text-xs font-medium text-white bg-[#1E3A8A] hover:bg-blue-900 rounded-md px-3 py-1.5">⬇ PDF Report</button>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2 flex flex-col gap-4">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <h3 class="text-sm font-bold text-slate-700 mb-3">Efficiency Indicator</h3>
+          <div id="stage1-bars" class="space-y-3 text-sm"><p class="text-slate-400 text-xs">No detections yet</p></div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <h3 class="text-sm font-bold text-slate-700 mb-2">Hourly Volume (Today)</h3>
+          <div class="h-40"><canvas id="stage1-hourly-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================== -->
+  <!-- SECTION 3: SECONDARY PLASTIC SEGREGATION (STAGE 2)           -->
+  <!-- =========================================================== -->
+  <section id="tab-stage2" class="tab-panel">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-[#0F172A]">Conveyor 2 — Live Feed</h3>
+            <p class="text-xs text-slate-500">Secondary Plastic Classification — 7 RIC Types</p>
+          </div>
+          <span id="badge-waste_secondary" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+        </div>
+        <div class="video-box relative">
+          <img id="feed-waste_secondary" class="hidden">
+          <div id="placeholder-waste_secondary" class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs px-4 text-center">Camera offline — click Start or upload footage</div>
+        </div>
+        <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+          <button id="toggle-waste_secondary" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start</button>
+          <label class="text-xs font-medium text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 bg-white cursor-pointer hover:border-slate-300">
+            Upload Footage <input id="upload-waste_secondary" type="file" accept="video/*" class="hidden">
+          </label>
+          <a id="dl-video-waste_secondary" href="/api/download/video/waste_secondary" class="text-xs font-medium text-[#1E3A8A] border border-blue-200 rounded-md px-3 py-1.5 bg-blue-50 hover:bg-blue-100">⬇ Download Annotated Video</a>
+          <button id="dl-log-waste_secondary" class="text-xs font-medium text-slate-600 border border-slate-200 rounded-md px-3 py-1.5 bg-white hover:bg-slate-50">⬇ CSV Log</button>
+          <button id="dl-pdf-waste_secondary" class="text-xs font-medium text-white bg-[#1E3A8A] hover:bg-blue-900 rounded-md px-3 py-1.5">⬇ PDF Report</button>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2 flex flex-col gap-4">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <h3 class="text-sm font-bold text-slate-700 mb-3">Plastic Type Breakdown</h3>
+          <div id="stage2-bars" class="space-y-3 text-sm"><p class="text-slate-400 text-xs">No detections yet</p></div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <h3 class="text-sm font-bold text-slate-700 mb-1">Estimated Recycling Revenue</h3>
+          <p class="text-[10px] text-slate-400 mb-2">Estimated from detection counts (not a calibrated scale)</p>
+          <p id="stage2-revenue" class="text-2xl font-extrabold text-[#16A34A]">₹0</p>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <div class="h-44"><canvas id="stage2-pie-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================== -->
+  <!-- SECTION 4: PWMU SHED SECURITY                                -->
+  <!-- =========================================================== -->
+  <section id="tab-shed" class="tab-panel">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-4 pt-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-[#0F172A]">PWMU Shed — 24/7 Live Feed</h3>
+            <p class="text-xs text-slate-500">Theft &amp; Anomaly Detection</p>
+          </div>
+          <span id="badge-thief" class="hidden text-[10px] font-bold px-2 py-1 rounded-full bg-red-50 text-red-600 border border-red-200">● LIVE</span>
+        </div>
+        <div class="video-box relative">
+          <img id="feed-thief" class="hidden">
+          <div id="placeholder-thief" class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs px-4 text-center">Camera offline — click Start to arm security</div>
+        </div>
+        <div class="px-4 py-2.5 flex items-center gap-2 bg-slate-50 flex-wrap">
+          <button id="toggle-thief" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition">Start</button>
+          <a id="dl-video-thief" href="/api/download/video/thief" class="text-xs font-medium text-[#1E3A8A] border border-blue-200 rounded-md px-3 py-1.5 bg-blue-50 hover:bg-blue-100">⬇ Download Annotated Video</a>
+          <button id="dl-log-thief" class="text-xs font-medium text-slate-600 border border-slate-200 rounded-md px-3 py-1.5 bg-white hover:bg-slate-50">⬇ CSV Log</button>
+          <button id="dl-pdf-thief" class="text-xs font-medium text-white bg-[#1E3A8A] hover:bg-blue-900 rounded-md px-3 py-1.5">⬇ PDF Report</button>
+          <label class="flex items-center gap-1.5 text-xs text-slate-500 ml-auto">
+            <input type="checkbox" id="alarm-toggle" checked> Audio alarm on new alert
+          </label>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <h3 class="text-sm font-bold text-slate-700 mb-2">Alert Audit Log</h3>
+        <div class="overflow-x-auto max-h-96 overflow-y-auto">
+          <table class="w-full">
+            <thead class="sticky top-0 bg-white">
+              <tr class="text-left text-[10px] uppercase tracking-wide text-slate-400 border-b border-slate-200">
+                <th class="py-2 px-3">Snapshot</th><th class="py-2 px-3">Reason</th><th class="py-2 px-3">Time</th>
+              </tr>
+            </thead>
+            <tbody id="shed-alerts-body"><tr><td colspan="3" class="text-center text-slate-400 py-6 text-sm">No alerts yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================== -->
+  <!-- SECTION 5: OVERALL OPERATIONS & AUDIT SUMMARY                -->
+  <!-- =========================================================== -->
+  <section id="tab-summary" class="tab-panel">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <p class="text-xs text-slate-500 font-medium">Items Detected Today</p>
+        <p id="kpi-total-items" class="text-2xl font-extrabold text-[#0F172A] mt-1">0</p>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <p class="text-xs text-slate-500 font-medium">Processing Balance</p>
+        <p id="kpi-balance" class="text-2xl font-extrabold text-[#16A34A] mt-1">0</p>
+        <p class="text-[10px] text-slate-400 mt-1">Vehicle IN − OUT</p>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <p class="text-xs text-slate-500 font-medium">Vehicle Entries</p>
+        <p id="kpi-vehicle-in" class="text-2xl font-extrabold text-[#1E3A8A] mt-1">0</p>
+      </div>
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 relative">
+        <p class="text-xs text-slate-500 font-medium">Active Security Alerts</p>
+        <p id="kpi-alerts" class="text-2xl font-extrabold text-[#DC2626] mt-1">0</p>
+        <span id="kpi-alerts-badge" class="hidden absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <h3 class="text-sm font-bold text-slate-700 mb-3">Report Generator</h3>
+        <p class="text-xs text-slate-500 mb-3">District Admin / SHG / Plant Operator ke liye daily, weekly, ya monthly digital audit trail generate karo.</p>
+        <div class="flex flex-col gap-2">
+          <label class="text-xs font-medium text-slate-600">Module</label>
+          <select id="report-module" class="text-sm border border-slate-200 rounded-md px-3 py-1.5">
+            <option value="full">All Modules (Combined)</option>
+            <option value="gate">Gate — Vehicle IN/OUT + ANPR</option>
+            <option value="waste_primary">Conveyor 1 — Primary Segregation</option>
+            <option value="waste_secondary">Conveyor 2 — Plastic Types</option>
+            <option value="thief">PWMU Shed — Security Alerts</option>
+          </select>
+          <label class="text-xs font-medium text-slate-600 mt-1">Period</label>
+          <select id="report-period" class="text-sm border border-slate-200 rounded-md px-3 py-1.5">
+            <option value="daily">Daily (Today)</option>
+            <option value="weekly">Weekly (This Week)</option>
+            <option value="monthly">Monthly (This Month)</option>
+            <option value="all">All Time</option>
+          </select>
+          <label class="text-xs font-medium text-slate-600 mt-1">Format</label>
+          <select id="report-format" class="text-sm border border-slate-200 rounded-md px-3 py-1.5">
+            <option value="pdf">PDF (Official Report)</option>
+            <option value="csv">CSV (Raw Data)</option>
+          </select>
+          <button id="generate-report-btn" class="bg-[#1E3A8A] hover:bg-blue-900 text-white text-sm font-semibold px-4 py-2.5 rounded-md mt-2">⬇ Generate &amp; Download Report</button>
+        </div>
+      </div>
+
+      <div class="lg:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <h3 class="text-sm font-bold text-slate-700 mb-2">Real-Time Audit Log — All Modules</h3>
+        <div class="overflow-x-auto max-h-96 overflow-y-auto">
+          <table class="w-full">
+            <thead class="sticky top-0 bg-white">
+              <tr class="text-left text-[10px] uppercase tracking-wide text-slate-400 border-b border-slate-200">
+                <th class="py-2 px-3">Type</th><th class="py-2 px-3">Detail</th><th class="py-2 px-3">Time</th><th class="py-2 px-3">Status</th>
+              </tr>
+            </thead>
+            <tbody id="audit-log-body"><tr><td colspan="4" class="text-center text-slate-400 py-6 text-sm">No events logged yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="text-center text-xs text-slate-400 mt-8 mb-4">
+    PWMU Intelligence Layer · Team Ecobyte × Robosapiens · NIT Raipur ·
+    <a href="{{ url_for('classic_index') }}" class="underline hover:text-slate-600">Classic detailed view</a>
+  </p>
+</main>
+
+<script src="{{ url_for('static', filename='js/command_center.js') }}"></script>
+</body>
+</html>
