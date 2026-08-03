@@ -339,21 +339,29 @@ Add screenshots inside the following folder.
 ```
 screenshots/
 
-home_dashboard.png
+<img width="1358" height="598" alt="image" src="https://github.com/user-attachments/assets/a8d32c2d-ba8e-4821-aacb-35b0c8fa0f40" />
 
-login_page.png
 
-gate_security.png
+<img width="1348" height="588" alt="image" src="https://github.com/user-attachments/assets/ee4c27fb-46f2-474f-b79a-cf41f325671f" />
 
-primary_segregation.png
 
-secondary_segregation.png
+<img width="1600" height="766" alt="WhatsApp Image 2026-07-30 at 2 25 20 PM (3)" src="https://github.com/user-attachments/assets/95a3ef14-543a-4239-a138-88bdc9456f15" />
 
-security_monitoring.png
 
-analytics_dashboard.png
+<img width="1600" height="801" alt="WhatsApp Image 2026-07-30 at 2 25 20 PM (4)" src="https://github.com/user-attachments/assets/eae865a3-acbd-4713-9dc6-60aa042ff098" />
 
-reports.png
+
+<img width="1581" height="632" alt="WhatsApp Image 2026-07-30 at 2 25 20 PM (6)" src="https://github.com/user-attachments/assets/69e91372-7091-4583-9bc6-e77c3e59d5ad" />
+
+
+<img width="1132" height="645" alt="WhatsApp Image 2026-07-30 at 2 25 20 PM (5)" src="https://github.com/user-attachments/assets/68085f02-ac51-4eb0-a86c-5cd137824d38" />
+
+
+<img width="1113" height="643" alt="WhatsApp Image 2026-07-30 at 2 25 20 PM" src="https://github.com/user-attachments/assets/3c79f558-4960-4fad-adc4-dfadc8cb3e6e" />
+
+
+<img width="1334" height="538" alt="image" src="https://github.com/user-attachments/assets/31276e53-d99e-4999-b1ba-bcb50ef24706" />
+
 ```
 
 ---
