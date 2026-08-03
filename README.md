@@ -334,10 +334,7 @@ JPEG_QUALITY=75
 
 # 📷 System Screenshots
 
-Add screenshots inside the following folder.
 
-```
-screenshots/
 
 <img width="1358" height="598" alt="image" src="https://github.com/user-attachments/assets/a8d32c2d-ba8e-4821-aacb-35b0c8fa0f40" />
 
@@ -362,7 +359,7 @@ screenshots/
 
 <img width="1334" height="538" alt="image" src="https://github.com/user-attachments/assets/31276e53-d99e-4999-b1ba-bcb50ef24706" />
 
-```
+
 
 ---
 
