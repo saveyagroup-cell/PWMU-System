@@ -1,147 +1,221 @@
-PWMU Unified AI Control-Room Dashboard
-AI-Based Plastic Waste Management Unit Monitoring System
+# PWMU Unified AI Control-Room Dashboard
 
-Team EchoByte
+> **AI-Based Plastic Waste Management Unit Monitoring System**
 
-Project Overview
+Developed by **Team EchoByte**
 
-PWMU Unified AI Control-Room Dashboard is an AI-powered monitoring platform developed for Plastic Waste Management Units (PWMUs). The system integrates Computer Vision, Deep Learning, IoT, and Cloud Technologies to automate waste monitoring, vehicle tracking, plastic segregation, security surveillance, and operational reporting through a single intelligent dashboard.
+[![Python](https://img.shields.io/badge/Python-3.11-blue.svg)]()
+[![Flask](https://img.shields.io/badge/Flask-3.x-black.svg)]()
+[![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-purple.svg)]()
+[![OpenCV](https://img.shields.io/badge/OpenCV-Computer%20Vision-green.svg)]()
+[![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E.svg)]()
+[![HuggingFace](https://img.shields.io/badge/Deployment-HuggingFace-yellow.svg)]()
 
-The platform combines multiple AI modules into one centralized control room for real-time monitoring and decision making.
+---
 
-System Modules
-1. Gate & Security
-Vehicle Entry Counting
-Vehicle Exit Counting
-Automatic Number Plate Recognition (ANPR)
-Number Plate Search
-Manual Plate Entry
-Vehicle History
-2. AI Waste Segregation
-Primary Segregation
-Metal
-Other Waste
-Secondary Plastic Classification
+# 📌 Project Overview
+
+The **PWMU Unified AI Control-Room Dashboard** is an AI-powered monitoring platform developed for **Plastic Waste Management Units (PWMUs)**. The system integrates Computer Vision, Deep Learning, IoT, and Cloud Technologies to automate waste segregation, vehicle monitoring, number plate recognition, security surveillance, and operational reporting through a centralized dashboard.
+
+The platform enables real-time monitoring of PWMU operations while improving efficiency, transparency, and data-driven decision-making.
+
+---
+
+# 🚀 Key Features
+
+- 🚗 Vehicle Entry & Exit Counting
+- 🔍 Automatic Number Plate Recognition (ANPR)
+- ♻️ Primary Waste Segregation
+- 🧴 Secondary Plastic Classification
+- 🛡️ PWMU Shed Security Monitoring
+- 📊 Real-Time Analytics Dashboard
+- 🔐 Secure User Authentication
+- ☁️ Supabase Cloud Integration
+- 📸 Image Storage & Detection Logs
+- 📄 PDF & CSV Report Generation
+- 🌐 Multi-Language Support
+- 🎥 Live Camera Streaming
+- 📂 Video Upload Processing
+- 📱 Responsive Dashboard UI
+
+---
+
+# 🆕 What's New (Latest Version)
+
+## ⚡ Performance Optimization
+
+- Background AI Model Warm-up
+- Faster Camera Initialization
+- Multi-threaded Video Processing
+- Queue-Based Frame Streaming
+- Reduced CPU Utilization
+- Optimized Memory Usage
+- Improved FPS Performance
+
+---
+
+## 🔐 Authentication System
+
+- Secure Login
+- Secure Registration
+- Supabase Authentication
+- User Profile Management
+- Protected Dashboard Routes
+- Session Management
+
+---
+
+## 🖥️ Dashboard Improvements
+
+- Executive Command Center
+- Modern Responsive UI
+- Institutional Branding
+- Improved Navigation
+- Enhanced User Experience
+
+---
+
+## 🤖 AI Improvements
+
+- Track-Based ANPR
+- Multi-frame OCR Verification
+- Character Voting Algorithm
+- Duplicate Plate Detection
+- Improved OCR Accuracy
+- Faster AI Inference
+
+---
+
+## ☁️ Cloud Integration
+
+- Supabase Database
+- Cloud Image Storage
+- Detection History
+- Secure Storage Buckets
+- Automatic Event Logging
+- Cloud Synchronization
+
+---
+
+## 📊 Reporting System
+
+- Daily Reports
+- Weekly Reports
+- Monthly Reports
+- Audit Reports
+- CSV Export
+- PDF Export
+- Historical Analytics
+
+---
+
+# 🖥️ System Modules
+
+## 🚗 Gate & Security
+
+- Vehicle Entry Counter
+- Vehicle Exit Counter
+- Automatic Number Plate Recognition (ANPR)
+- Vehicle Search
+- Manual Plate Entry
+- Vehicle History
+
+---
+
+## ♻️ AI Waste Segregation
+
+### Primary Waste Segregation
+
+- Metal
+- Other Waste
+
+### Secondary Plastic Classification
 
 Detects
 
-PET
-HDPE
-PVC
-LDPE
-PP
-PS
-Others
+- PET
+- HDPE
+- PVC
+- LDPE
+- PP
+- PS
+- Others
 
 using custom-trained YOLO models.
 
-3. PWMU Shed Security
+---
 
-Features
+## 🛡️ PWMU Shed Security
 
-AI Intrusion Detection
-Loitering Detection
-Theft Detection
-Browser Alarm
-Telegram Notification
-Image Capture
-Cloud Event Storage
-4. Analytics Dashboard
+- Intrusion Detection
+- Loitering Detection
+- Theft Detection
+- Browser Alarm
+- Telegram Notification
+- Image Capture
+- Cloud Event Storage
 
-Real-time monitoring dashboard including
+---
 
-Vehicle Statistics
-Waste Statistics
-Plastic Composition
-Revenue Estimation
-Daily Reports
-Weekly Reports
-Monthly Reports
-Audit Reports
-PDF Export
-Key Features
-AI-powered Waste Segregation
-Vehicle Counting
-Automatic Number Plate Recognition
-Real-time Dashboard
-Live Camera Streaming
-Video Upload Processing
-Multi-language Support
-Secure User Authentication
-Supabase Cloud Storage
-Telegram Security Alerts
-CSV Export
-PDF Report Generation
-Responsive UI
-Modular Architecture
-What's New (Final Update)
-Performance Improvements
-Background AI Model Warm-up
-Faster Camera Startup
-Multi-threaded Video Processing
-Queue-based Frame Streaming
-Lower CPU Usage
-Lower RAM Consumption
-Authentication
-Secure Login
-Secure Registration
-User Profile
-Session Management
-Protected Routes
-Dashboard Improvements
-New Executive Command Center
-Professional Dashboard Layout
-Institutional Branding
-Modern Navigation
-Responsive Design
-AI Improvements
-Track-based ANPR
-Multi-frame OCR Verification
-Character Voting
-Duplicate Plate Removal
-Improved Detection Accuracy
-Cloud Integration
-Supabase Authentication
-Cloud Database
-Image Storage
-Storage Buckets
-Event Logging
-Reporting
-CSV Export
-PDF Export
-Analytics Dashboard
-Historical Records
-Technology Stack
-Frontend
-HTML5
-CSS3
-Bootstrap 5
-JavaScript
-Backend
-Python
-Flask
-AI Models
-YOLOv8
-EasyOCR
-OpenCV
-Database
-Supabase
-PostgreSQL
-Cloud
-Supabase Storage
-Reporting
-ReportLab
-Matplotlib
-Repository Structure
+## 📈 Analytics Dashboard
+
+- Vehicle Statistics
+- Waste Statistics
+- Plastic Composition
+- Revenue Analysis
+- Detection History
+- Audit Reports
+- PDF Export
+
+---
+
+# 🛠 Technology Stack
+
+## Frontend
+
+- HTML5
+- CSS3
+- Bootstrap 5
+- JavaScript
+
+## Backend
+
+- Python
+- Flask
+
+## AI & Computer Vision
+
+- YOLOv8
+- OpenCV
+- EasyOCR
+
+## Database
+
+- Supabase PostgreSQL
+
+## Cloud Storage
+
+- Supabase Storage
+
+## Reporting
+
+- ReportLab
+- Matplotlib
+
+---
+
+# 📂 Repository Structure
+
+```text
 PWMU-System/
 │
 ├── frontend/
 │   ├── templates/
-│   ├── static/
-│   │   ├── css/
-│   │   ├── js/
-│   │   ├── images/
-│   │   └── icons/
+│   └── static/
+│       ├── css/
+│       ├── js/
+│       ├── images/
+│       └── icons/
 │
 ├── backend/
 │   ├── app.py
@@ -157,22 +231,12 @@ PWMU-System/
 │   ├── number_plate.pt
 │   └── yolov8s.pt
 │
-├── hardware/
-│   ├── IoT/
-│   ├── Arduino/
-│   └── ESP32/
-│
-├── api/
-│
 ├── documentation/
-│   ├── Installation_Guide.pdf
-│   ├── Architecture.pdf
-│   └── User_Manual.pdf
 │
 ├── screenshots/
 │
-├── outputs/
 ├── uploads/
+├── outputs/
 ├── captures/
 │
 ├── README.md
@@ -180,19 +244,45 @@ PWMU-System/
 ├── .env.example
 ├── supabase_schema.sql
 └── LICENSE
-Installation Guide
+```
+
+---
+
+# ⚙️ Installation Guide
+
+```bash
+# Clone Repository
+
 git clone https://github.com/saveyagroup-cell/PWMU-System.git
+
+# Open Project
 
 cd PWMU-System
 
+# Create Virtual Environment
+
 python -m venv venv
+
+# Activate Environment (Windows)
 
 venv\Scripts\activate
 
+# Install Dependencies
+
 pip install -r requirements.txt
 
+# Run Application
+
 python app.py
-Environment Variables
+```
+
+---
+
+# 🔐 Environment Variables
+
+Create a `.env` file and configure the following variables:
+
+```env
 FLASK_SECRET_KEY=
 
 SUPABASE_URL=
@@ -212,45 +302,124 @@ TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
 
 CAMERA_INDEX=0
+
 FRAME_SKIP=2
+
+PLATE_FRAME_SKIP=5
+
 JPEG_QUALITY=75
-Deployment Instructions
+```
 
-Supported Platforms
+---
 
-Render (Recommended)
-Railway
-Docker
-Local Server
-Team Members
-Name	Role
-Nomend Kumar Sahu	Team Lead
-Yogesh Kumar Yadav	Backend Developer
-Harsha Sahu	Frontend Developer
-Dagendra Kumar Sahu	AI & IoT Developer
-Jayant Verma	AI & IoT Developer
-System Screenshots
+# 🚀 Deployment
+
+## Hugging Face Spaces (Live)
+
+**Live Demo**
+
+👉 https://huggingface.co/spaces/saveyagroup/PWMU-SYSTEM
+
+---
+
+## Supported Platforms
+
+- Hugging Face Spaces ✅
+- Render
+- Railway
+- Docker
+- Local Server
+
+---
+
+# 📷 System Screenshots
+
+Add screenshots inside the following folder.
+
+```
 screenshots/
 
 home_dashboard.png
 
+login_page.png
+
 gate_security.png
 
-ai_segregation.png
+primary_segregation.png
+
+secondary_segregation.png
+
+security_monitoring.png
 
 analytics_dashboard.png
 
-login_page.png
+reports.png
+```
 
-report_generation.png
-Live Demo
-https://your-render-link.onrender.com
-Documentation
-Installation Guide
-User Manual
-API Documentation
-Database Schema
-Project Architecture
-License
+---
 
-Developed by Team EchoByte for the AI-Based Plastic Waste Management Unit (PWMU) Monitoring System, Department of Computer Science & Engineering, NIT Raipur.
+# 👨‍💻 Team Members
+
+| Name | Role |
+|------|------|
+| Nomend Kumar Sahu | Team Lead |
+| Yogesh Kumar Yadav | Backend Developer |
+| Harsha Sahu | Frontend Developer |
+| Dagendra Kumar Sahu | AI & IoT Developer |
+| Jayant Verma | AI & IoT Developer |
+
+---
+
+# 🌐 Live Demo
+
+### Hugging Face Spaces
+
+https://huggingface.co/spaces/saveyagroup/PWMU-SYSTEM
+
+---
+
+# 📚 Documentation
+
+The project documentation includes:
+
+- Installation Guide
+- User Manual
+- API Documentation
+- Database Schema
+- System Architecture
+- Deployment Guide
+
+---
+
+# 🔮 Future Enhancements
+
+- Mobile Application Support
+- Multi-Camera Integration
+- AI Predictive Analytics
+- GPS-Based Vehicle Tracking
+- IoT Sensor Integration
+- QR-Based Waste Tracking
+- Voice Assistant Support
+- Role-Based Access Control
+- Email & SMS Notifications
+
+---
+
+# 📄 License
+
+This project has been developed by **Team EchoByte** for academic research, innovation, and smart Plastic Waste Management Unit (PWMU) monitoring.
+
+© 2026 Team EchoByte. All Rights Reserved.
+
+---
+
+## ⭐ Acknowledgements
+
+- National Institute of Technology Raipur
+- Government of Chhattisgarh
+- UNICEF
+- Ultralytics YOLO
+- OpenCV
+- EasyOCR
+- Supabase
+- Hugging Face
