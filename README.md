@@ -312,15 +312,7 @@ JPEG_QUALITY=75
 
 ---
 
-# 🚀 Deployment
 
-## Hugging Face Spaces (Live)
-
-**Live Demo**
-
-👉 https://huggingface.co/spaces/saveyagroup/PWMU-SYSTEM
-
----
 
 ## Supported Platforms
 
