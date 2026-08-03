@@ -365,15 +365,16 @@ JPEG_QUALITY=75
 
 # 👨‍💻 Team Members
 
-| Name | Role |
-|------|------|
-| Nomend Kumar Sahu | Team Lead |
-| Yogesh Kumar Yadav | Backend Developer |
-| Harsha Sahu | Frontend Developer |
-| Dagendra Kumar Sahu | AI & IoT Developer |
-| Jayant Verma | AI & IoT Developer |
+| Team Member | Role | Responsibility |
+|---|---|---|
+| **Nomend Kumar Sahu** | Team Lead | Project Management & Development |
+| **Yogesh Kumar Yadav** | Developer | Backend & Supabase Integration |
+| **Harsha Sahu** | Developer | Frontend & UI/UX |
+| **Dagendra Kumar Sahu** | Developer | Data Collection, Data Analysis & Model Training (Deep Learning), IoT Integration |
+| **Jayant Verma** | Developer |  IoT Integration, Data Collection, Data Analysis & Model Training (Deep Learning) |
 
 ---
+
 
 # 🌐 Live Demo
 
